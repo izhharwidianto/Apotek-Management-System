@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+@page {
+  size: A4;
+  margin: 2cm 2.5cm;
+  @bottom-center {
+    content: "ApotekZ PRD — Halaman " counter(page) " dari " counter(pages);
+    font-size: 9px;
+    color: #888;
+  }
+}
+@page :first { margin: 0; @bottom-center { content: none; } }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; line-height: 1.6; color: #1e293b; }
+.cover { page-break-after: always; height: 297mm; background: linear-gradient(160deg, #fff8ed 0%, #fef0e0 50%, #fce4cd 100%); padding: 4cm 3cm; display: flex; flex-direction: column; justify-content: space-between; }
+.cover-top { display: flex; align-items: center; gap: 16px; }
+.cover-logo { width: 56px; height: 56px; background: #d35400; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: 900; }
+.cover-brand { font-size: 22px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; }
+.cover-brand-sub { font-size: 11px; color: #64748b; font-weight: 500; }
+.cover-title { margin-top: 6cm; }
+.cover-title h1 { font-size: 36px; font-weight: 900; color: #1e293b; letter-spacing: -1px; line-height: 1.1; }
+.cover-title p { font-size: 14px; color: #64748b; margin-top: 12px; font-weight: 500; }
+.cover-badge { display: inline-block; background: #d35400; color: white; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-top: 16px; }
+.cover-meta { border-top: 1px solid #e2d8cc; padding-top: 20px; font-size: 11px; color: #64748b; }
+.cover-meta table { width: 100%; }
+.cover-meta td { padding: 3px 0; }
+.cover-meta td:first-child { font-weight: 600; color: #1e293b; width: 140px; }
+h2 { font-size: 18px; font-weight: 800; color: #d35400; margin: 28px 0 12px 0; padding-bottom: 6px; border-bottom: 2px solid #f0e0d0; letter-spacing: -0.3px; }
+h3 { font-size: 13px; font-weight: 700; color: #1e293b; margin: 18px 0 8px 0; }
+h4 { font-size: 12px; font-weight: 700; color: #334155; margin: 14px 0 6px 0; }
+p { margin-bottom: 8px; }
+ul, ol { margin: 6px 0 10px 18px; }
+li { margin-bottom: 3px; }
+strong { font-weight: 700; }
+.toc { page-break-after: always; }
+.toc h2 { border: none; margin-top: 0; }
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { padding: 5px 0; border-bottom: 1px dotted #e2e8f0; font-size: 11px; }
+.toc-list li span { color: #d35400; font-weight: 600; margin-right: 8px; }
+table.data { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+table.data th { background: #d35400; color: white; padding: 6px 8px; text-align: left; font-weight: 700; font-size: 10px; }
+table.data td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+table.data tr:nth-child(even) td { background: #fdf8f3; }
+table.data code { font-family: monospace; font-size: 9px; background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+.card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin: 10px 0; background: #fafafa; }
+.card-orange { border-left: 4px solid #d35400; background: #fff8ed; }
+.card-blue { border-left: 4px solid #0ea5e9; background: #f0f9ff; }
+.card-green { border-left: 4px solid #16a34a; background: #f0fdf4; }
+.card-red { border-left: 4px solid #dc2626; background: #fef2f2; }
+.card-amber { border-left: 4px solid #d97706; background: #fffbeb; }
+.role-badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 4px; }
+.role-owner { background: #fef3c7; color: #92400e; }
+.role-apoteker { background: #e0f2fe; color: #075985; }
+.role-kasir { background: #d1fae5; color: #065f46; }
+pre { background: #1e293b; color: #e2e8f0; padding: 10px 14px; border-radius: 6px; font-family: monospace; font-size: 9px; line-height: 1.5; overflow-x: auto; margin: 8px 0; }
+.flow { display: flex; align-items: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+.flow-step { background: #d35400; color: white; padding: 4px 12px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+.flow-arrow { color: #d35400; font-size: 16px; font-weight: bold; }
+.section { page-break-before: always; }
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+.small { font-size: 9px; color: #64748b; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div><div class="cover-top"><div class="cover-logo">Z</div><div><div class="cover-brand">ApotekZ</div><div class="cover-brand-sub">Apotek Management System</div></div></div></div>
+  <div class="cover-title">
+    <h1>Product Requirements Document</h1>
+    <p>Sistem Manajemen Apotek Terintegrasi<br>POS, Inventori, Resep, Stok Opname, Batch Tracking & AI Analytics</p>
+    <div class="cover-badge">Versi 1.0 — Oktober 2026</div>
+  </div>
+  <div class="cover-meta"><table>
+    <tr><td>Produk</td><td>ApotekZ — Apotek Management System</td></tr>
+    <tr><td>Platform</td><td>Web Application (Next.js + Supabase)</td></tr>
+    <tr><td>Tipe</td><td>Single-tenant, Multi-role (Owner/Apoteker/Kasir)</td></tr>
+    <tr><td>Database</td><td>Supabase (PostgreSQL + RLS)</td></tr>
+    <tr><td>Deployment</td><td>Netlify (Frontend) + Supabase (Backend)</td></tr>
+    <tr><td>Tanggal Dokumen</td><td>7 Oktober 2026</td></tr>
+    <tr><td>Status</td><td>Production Ready</td></tr>
+  </table></div>
+</div>
+
+<div class="toc">
+  <h2>Daftar Isi</h2>
+  <ul class="toc-list">
+    <li><span>1.</span> Ringkasan Eksekutif</li>
+    <li><span>2.</span> Identitas Produk & Branding</li>
+    <li><span>3.</span> Tech Stack & Arsitektur</li>
+    <li><span>4.</span> Sistem Autentikasi & Role-Based Access Control</li>
+    <li><span>5.</span> Modul Dashboard</li>
+    <li><span>6.</span> Modul Kasir / Point of Sale (POS)</li>
+    <li><span>7.</span> Modul Inventori & Manajemen Obat</li>
+    <li><span>8.</span> Modul Histori Penjualan & Pelanggan</li>
+    <li><span>9.</span> Modul Purchase Order ke Pemasok</li>
+    <li><span>10.</span> Modul Shift Kasir & Rekonsiliasi</li>
+    <li><span>11.</span> Modul Manajemen Resep Dokter</li>
+    <li><span>12.</span> Modul Stok Opname</li>
+    <li><span>13.</span> Modul Tracking Batch/Lot</li>
+    <li><span>14.</span> Modul AI — Demand Forecasting</li>
+    <li><span>15.</span> Modul AI — Financial Analytics (CFO Dashboard)</li>
+    <li><span>16.</span> Modul Laporan Keuangan</li>
+    <li><span>17.</span> Modul Perbaikan & Validasi (Quality/CAPA)</li>
+    <li><span>18.</span> Sistem Cetak & Printables</li>
+    <li><span>19.</span> Skema Database Lengkap</li>
+    <li><span>20.</span> Sistem Keamanan & RLS Policies</li>
+    <li><span>21.</span> UI/UX Design System</li>
+    <li><span>22.</span> Roadmap & Pengembangan Selanjutnya</li>
+  </ul>
+</div>
+
+<div class="section">
+<h2>1. Ringkasan Eksekutif</h2>
+<p>ApotekZ adalah sistem manajemen apotek berbasis web yang dirancang untuk mengotomatisasi dan mengintegrasikan seluruh operasional apotek modern di Indonesia. Sistem ini mencakup transaksi penjualan (POS), manajemen inventori obat, pencatatan resep dokter, shift kasir dengan rekonsiliasi kas, purchase order ke pemasok, stok opname dengan audit trail, tracking batch/lot untuk recall BPOM, serta analitik cerdas berbasis AI untuk prediksi permintaan dan laporan keuangan.</p>
+<h3>Masalah yang Diselesaikan</h3>
+<ul>
+  <li><strong>Operasional manual yang lambat:</strong> Kasir menggunakan kalkulator dan catatan manual, rawan kesalahan hitung.</li>
+  <li><strong>Tidak ada pelacakan resep:</strong> Resep dokter tidak tercatat dengan baik, sulit dilacak ulang jika ada recall atau komplain.</li>
+  <li><strong>Stok tidak terkontrol:</strong> Tidak ada peringatan stok menipis atau obat kadaluarsa, sering kehabisan tanpa diketahui.</li>
+  <li><strong>Kasir tidak akuntabel:</strong> Tidak ada sistem shift, sehingga selisih kas sulit ditelusuri ke kasir mana.</li>
+  <li><strong>Tidak ada tracking batch:</strong> Jika BPOM mengeluarkan surat recall, tidak tahu batch mana yang harus ditarik.</li>
+  <li><strong>Laporan keuangan manual:</strong> Pemilik kesulitan melihat profit/loss real-time, harus rekap manual dari struk.</li>
+</ul>
+<h3>Solusi ApotekZ</h3>
+<div class="card card-orange"><p>ApotekZ menggabungkan 14 modul fungsional dalam satu aplikasi web yang dapat diakses dari browser apapun. Sistem ini menggunakan Supabase (PostgreSQL) sebagai database terpusat, Next.js sebagai framework frontend, dan terintegrasi dengan layanan AI (Groq, OpenRouter, OpenAI) untuk analitik prediktif.</p></div>
+<h3>Key Metrics</h3>
+<table class="data"><tr><th>Metrik</th><th>Nilai</th></tr>
+  <tr><td>Total Modul Fungsional</td><td>14 modul</td></tr>
+  <tr><td>Total Tabel Database</td><td>19 tabel</td></tr>
+  <tr><td>Jenis Role Pengguna</td><td>3 (Owner, Apoteker, Kasir)</td></tr>
+  <tr><td>Total Migrasi Database</td><td>17 file migrasi</td></tr>
+  <tr><td>AI Providers Didukung</td><td>5 (Groq, OpenRouter, OpenAI, Together, Fireworks)</td></tr>
+  <tr><td>Komponen UI (shadcn/ui)</td><td>40+ komponen</td></tr>
+  <tr><td>Format Cetak</td><td>Thermal 80mm + A4 Invoice + Label Resep + Laporan</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>2. Identitas Produk & Branding</h2>
+<h3>Informasi Apotek</h3>
+<table class="data"><tr><th>Field</th><th>Nilai Default</th></tr>
+  <tr><td>Nama Apotek</td><td>Apotek Sehat Sentosa</td></tr>
+  <tr><td>Alamat</td><td>Jl. Kesehatan Raya No. 1, Menteng, Jakarta Pusat 10310</td></tr>
+  <tr><td>Telepon</td><td>(021) 314-5678</td></tr>
+  <tr><td>WhatsApp</td><td>0812-3456-7890</td></tr>
+  <tr><td>Email</td><td>info@apoteksehatsentosa.co.id</td></tr>
+  <tr><td>SIKL</td><td>503/A/AP/2018</td></tr>
+  <tr><td>NPWP</td><td>01.234.567.8-901.000</td></tr>
+</table>
+<h3>Branding & Visual Identity</h3>
+<table class="data"><tr><th>Elemen</th><th>Detail</th></tr>
+  <tr><td>Nama Produk</td><td>ApotekZ</td></tr>
+  <tr><td>Tagline</td><td>Apotek Management System</td></tr>
+  <tr><td>Logo</td><td>Huruf "Z" dalam kotak rounded berwarna copper/orange</td></tr>
+  <tr><td>Font</td><td>Inter (Google Fonts) — 3 weight: 400, 600, 800</td></tr>
+  <tr><td>Primary Color</td><td>HSL(22, 80%, 46%) — Copper Orange</td></tr>
+  <tr><td>Background</td><td>HSL(38, 44%, 94%) — Warm cream/sand</td></tr>
+  <tr><td>Design Language</td><td>"Warm wood-tone" — terinspirasi light oak timber, cream backgrounds, warm brown text, copper accent</td></tr>
+  <tr><td>Dark Mode</td><td>Didukung via darkMode: 'class' di Tailwind config</td></tr>
+</table>
+<h3>Color System (6 Ramp + Neutral)</h3>
+<table class="data"><tr><th>Ramp</th><th>HSL Value</th><th>Penggunaan</th></tr>
+  <tr><td>Primary</td><td>22 80% 46%</td><td>Button, link, highlight aktif</td></tr>
+  <tr><td>Secondary</td><td>32 30% 88%</td><td>Hover state, secondary button</td></tr>
+  <tr><td>Success</td><td>142 50% 38%</td><td>Shift aktif, status selesai</td></tr>
+  <tr><td>Warning</td><td>38 85% 48%</td><td>Stok menipis, expiring soon</td></tr>
+  <tr><td>Destructive</td><td>0 70% 50%</td><td>Error, delete, recall BPOM</td></tr>
+  <tr><td>Chart 1-5</td><td>Orange, green, yellow, purple, pink</td><td>Grafik & visualisasi data</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>3. Tech Stack & Arsitektur</h2>
+<h3>Frontend</h3>
+<table class="data"><tr><th>Komponen</th><th>Versi/Detail</th><th>Peran</th></tr>
+  <tr><td>Next.js</td><td>13.5.1</td><td>Framework React dengan App Router</td></tr>
+  <tr><td>React</td><td>18.2.0</td><td>UI library</td></tr>
+  <tr><td>TypeScript</td><td>5.2.2</td><td>Type safety di seluruh codebase</td></tr>
+  <tr><td>Tailwind CSS</td><td>3.3.3</td><td>Utility-first CSS framework</td></tr>
+  <tr><td>shadcn/ui</td><td>40+ komponen</td><td>Komponen UI berbasis Radix UI</td></tr>
+  <tr><td>Lucide React</td><td>0.446.0</td><td>Icon system</td></tr>
+  <tr><td>Recharts</td><td>2.12.7</td><td>Chart & grafik untuk dashboard</td></tr>
+  <tr><td>Inter Font</td><td>Google Fonts</td><td>Typography utama</td></tr>
+</table>
+<h3>Backend & Database</h3>
+<table class="data"><tr><th>Komponen</th><th>Detail</th><th>Peran</th></tr>
+  <tr><td>Supabase</td><td>Hosted PostgreSQL</td><td>Database, Auth, Edge Functions</td></tr>
+  <tr><td>@supabase/supabase-js</td><td>v2.58.0</td><td>Client SDK untuk query & auth</td></tr>
+  <tr><td>Row Level Security</td><td>4 policies per tabel</td><td>Access control di level database</td></tr>
+  <tr><td>Edge Functions</td><td>Deno runtime</td><td>verify-login (bcrypt auth)</td></tr>
+  <tr><td>bcryptjs</td><td>v3.0.3</td><td>Password hashing untuk login</td></tr>
+</table>
+<h3>AI Integration</h3>
+<div class="card card-blue"><p>Sistem mendukung 5 AI provider yang auto-detect berdasarkan API key: <strong>Groq</strong> (free), <strong>OpenRouter</strong> (free tier), <strong>OpenAI</strong>, <strong>Together AI</strong>, dan <strong>Fireworks AI</strong>. User cukup memasukkan API key di Pengaturan AI, sistem akan otomatis mencoba provider dan model yang cocok.</p></div>
+<h3>Deployment</h3>
+<table class="data"><tr><th>Platform</th><th>Target</th></tr>
+  <tr><td>Frontend</td><td>Netlify (dengan @netlify/plugin-nextjs)</td></tr>
+  <tr><td>Database</td><td>Supabase (hosted PostgreSQL)</td></tr>
+  <tr><td>Edge Functions</td><td>Supabase Edge Functions (Deno)</td></tr>
+</table>
+<h3>Arsitektur Sistem</h3>
+<pre>
+Browser (Client)
+  Next.js App Router + Tailwind CSS + shadcn/ui
+       │
+  @supabase/supabase-js (Client)
+       │                      │
+       ▼                      ▼
+  Supabase PostgreSQL    Supabase Edge Functions
+  (20+ Tables, RLS)     (verify-login - bcrypt)
+                              │
+                         AI Providers
+                     Groq / OpenRouter / OpenAI
+                     Together / Fireworks
+</pre>
+</div>
+
+<div class="section">
+<h2>4. Sistem Autentikasi & Role-Based Access Control</h2>
+<h3>Tabel: app_users</h3>
+<p>Autentikasi menggunakan Supabase Edge Function <code>verify-login</code> dengan bcrypt hash. Password tidak disimpan plaintext — diverifikasi via edge function yang berjalan di server.</p>
+<h3>Default Credentials</h3>
+<table class="data"><tr><th>Username</th><th>Password</th><th>Role</th><th>Display Name</th></tr>
+  <tr><td>owner</td><td>ApotekZ@Owner2025</td><td><span class="role-badge role-owner">Owner</span></td><td>Pemilik Apotek</td></tr>
+  <tr><td>apoteker</td><td>ApotekZ@Apoteker2025</td><td><span class="role-badge role-apoteker">Apoteker</span></td><td>Apt. Penanggung Jawab</td></tr>
+  <tr><td>kasir</td><td>ApotekZ@Kasir2025</td><td><span class="role-badge role-kasir">Kasir</span></td><td>Staff Kasir</td></tr>
+</table>
+<h3>Role Access Matrix</h3>
+<table class="data"><tr><th>Modul</th><th>Owner</th><th>Apoteker</th><th>Kasir</th></tr>
+  <tr><td>Dashboard</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>Kasir / POS</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Histori Penjualan</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Stok & Inventori</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Purchase Order</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>Shift Kasir</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Resep Dokter</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  <tr><td>Stok Opname</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>Tracking Batch/Lot</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>Forecast / Demand Planning (AI)</td><td>✓</td><td>—</td><td>—</td></tr>
+  <tr><td>Financial Analytics (AI)</td><td>✓</td><td>—</td><td>—</td></tr>
+  <tr><td>Laporan Keuangan</td><td>✓</td><td>✓</td><td>—</td></tr>
+  <tr><td>Perbaikan & Validasi (CAPA)</td><td>✓</td><td>—</td><td>—</td></tr>
+</table>
+<h3>Default Landing Page per Role</h3>
+<ul><li><strong>Owner</strong> → Dashboard</li><li><strong>Apoteker</strong> → Dashboard</li><li><strong>Kasir</strong> → Kasir / POS</li></ul>
+<h3>Auth Flow</h3>
+<div class="flow"><span class="flow-step">Input username + password</span><span class="flow-arrow">→</span><span class="flow-step">Edge Function verify-login</span><span class="flow-arrow">→</span><span class="flow-step">bcrypt compare</span><span class="flow-arrow">→</span><span class="flow-step">Return user data</span><span class="flow-arrow">→</span><span class="flow-step">AuthContext set user</span><span class="flow-arrow">→</span><span class="flow-step">Redirect to role default</span></div>
+</div>
+
+<div class="section"><h2>5. Modul Dashboard</h2><p>Halaman utama untuk Owner dan Apoteker. Menampilkan ringkasan operasional apotek secara real-time.</p><h3>Komponen yang Ditampilkan</h3><ul><li><strong>Stat cards:</strong> Total omzet hari ini, jumlah transaksi, total obat terjual, stok kritis</li><li><strong>Notifikasi:</strong> Obat kadaluarsa akan datang, stok di bawah reorder point, batch yang perlu recall</li><li><strong>Grafik:</strong> Tren penjualan 7 hari terakhir (line chart), top 5 obat terlaris (bar chart)</li><li><strong>Quick actions:</strong> Shortcut ke POS, tambah obat, buka shift, catat resep</li></ul></div>
+
+<div class="section">
+<h2>6. Modul Kasir / Point of Sale (POS)</h2>
+<p>Modul inti untuk transaksi penjualan. Dapat diakses oleh Owner, Apoteker, dan Kasir.</p>
+<h3>Fitur Utama</h3>
+<ul><li><strong>Pencarian obat:</strong> Cari berdasarkan nama, kode, atau barcode. Real-time saat mengetik.</li><li><strong>Keranjang belanja:</strong> Tambah/hapus item, ubah quantity, hitung subtotal otomatis.</li><li><strong>Multiple payment methods:</strong> Cash, Debit, QRIS, Transfer.</li><li><strong>Diskon & PPN:</strong> Diskon dalam Rupiah atau persen, PPN 11% dapat di-toggle.</li><li><strong>Customer lookup:</strong> Pilih pelanggan terdaftar untuk poin loyalty, atau input walk-in customer.</li><li><strong>Cetak struk:</strong> Thermal printer 80mm dengan logo apotek, alamat, SIKL, dan footer ucapan terima kasih.</li><li><strong>Cetak invoice A4:</strong> Invoice formal untuk arsip internal dengan NPWP.</li><li><strong>Auto-generate invoice number:</strong> Format INV-YYYYMMDD-HHMMSS###</li></ul>
+<h3>Alur Transaksi</h3>
+<div class="flow"><span class="flow-step">Cari obat</span><span class="flow-arrow">→</span><span class="flow-step">Tambah ke keranjang</span><span class="flow-arrow">→</span><span class="flow-step">Pilih customer</span><span class="flow-arrow">→</span><span class="flow-step">Pilih metode bayar</span><span class="flow-arrow">→</span><span class="flow-step">Input bayar</span><span class="flow-arrow">→</span><span class="flow-step">Cetak struk</span></div>
+<h3>Database Tables Terkait</h3>
+<table class="data"><tr><th>Tabel</th><th>Kolom Utama</th><th>Deskripsi</th></tr>
+  <tr><td>sales</td><td>invoice_no, customer_name, subtotal, tax, discount, total, paid, change, payment_method, status</td><td>Header transaksi penjualan</td></tr>
+  <tr><td>sale_items</td><td>sale_id, medicine_id, medicine_name, quantity, price, subtotal</td><td>Line item per transaksi</td></tr>
+  <tr><td>returns</td><td>sale_id, invoice_no, medicine_name, quantity, reason, refund_amount</td><td>Retur barang</td></tr>
+  <tr><td>customers</td><td>name, phone, email, address, loyalty_points, total_visits, total_spent</td><td>Master data pelanggan & loyalty</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>7. Modul Inventori & Manajemen Obat</h2>
+<p>Modul untuk mengelola master data obat, stok, harga, dan kategori. Dapat diakses oleh semua role.</p>
+<h3>Fitur Utama</h3>
+<ul><li><strong>CRUD obat:</strong> Tambah, edit, hapus obat dengan field lengkap (kode, nama, generic name, kategori, klasifikasi obat, bentuk sediaan, satuan, stok, harga beli, harga jual, reorder point, tanggal kadaluarsa, supplier).</li><li><strong>Klasifikasi obat:</strong> Obat Bebas, Obat Bebas Terbatas, Obat Keras, Obat Narkotika, Obat Bahan Alam, Vitamin & Suplemen.</li><li><strong>Bentuk sediaan:</strong> Tablet, Kaplet, Kapsul, Sirup, Suspensi, Salep, Krim, Tetes, Injeksi, Suppositoria, Granul, Oles, Inhalasi.</li><li><strong>Search & filter:</strong> Cari berdasarkan nama/kode, filter berdasarkan kategori dan klasifikasi.</li><li><strong>Stok alerts:</strong> Obat dengan stok di bawah reorder point disorot otomatis.</li><li><strong>Expiry tracking:</strong> Obat yang akan kadaluarsa dalam 90 hari ditandai.</li><li><strong>Database obat:</strong> Pre-seeded dengan database obat OTC, OWA (Obat Wajib Apotek), dan obat resep.</li></ul>
+<h3>Tabel: medicines</h3>
+<table class="data"><tr><th>Kolom</th><th>Tipe</th><th>Deskripsi</th></tr>
+  <tr><td>id</td><td>uuid PK</td><td>Primary key</td></tr>
+  <tr><td>code</td><td>text UNIQUE</td><td>Kode obat (mis. MD001)</td></tr>
+  <tr><td>name</td><td>text</td><td>Nama dagang obat</td></tr>
+  <tr><td>generic_name</td><td>text</td><td>Nama generik (mis. Paracetamol)</td></tr>
+  <tr><td>category</td><td>text</td><td>Kategori (Tablet, Sirup, dll)</td></tr>
+  <tr><td>drug_classification</td><td>text</td><td>Klasifikasi (Bebas, Keras, dll)</td></tr>
+  <tr><td>dosage_form</td><td>text</td><td>Bentuk sediaan</td></tr>
+  <tr><td>unit</td><td>text</td><td>Satuan (strip, botol, tube)</td></tr>
+  <tr><td>stock</td><td>integer</td><td>Jumlah stok saat ini</td></tr>
+  <tr><td>cost_price</td><td>numeric(14,2)</td><td>Harga beli</td></tr>
+  <tr><td>sell_price</td><td>numeric(14,2)</td><td>Harga jual</td></tr>
+  <tr><td>reorder_point</td><td>integer</td><td>Batas minimum untuk reorder</td></tr>
+  <tr><td>expiry_date</td><td>date</td><td>Tanggal kadaluarsa</td></tr>
+  <tr><td>supplier</td><td>text</td><td>Nama supplier</td></tr>
+</table>
+</div>
+
+<div class="section"><h2>8. Modul Histori Penjualan & Pelanggan</h2><p>Modul untuk melihat riwayat seluruh transaksi yang pernah terjadi, dengan detail per invoice.</p><h3>Fitur</h3><ul><li><strong>Daftar transaksi:</strong> Tabel dengan invoice no, tanggal, pelanggan, total, metode bayar, status.</li><li><strong>Filter & search:</strong> Cari berdasarkan invoice no atau nama pelanggan.</li><li><strong>Detail transaksi:</strong> Klik untuk melihat item-item yang dibeli.</li><li><strong>Cetak ulang struk:</strong> Bisa cetak ulang struk untuk transaksi yang sudah lewat.</li><li><strong>Retur barang:</strong> Catat retur dengan alasan dan jumlah refund.</li><li><strong>Manajemen pelanggan:</strong> Lihat daftar pelanggan, poin loyalty, total kunjungan, total belanja.</li><li><strong>Status transaksi:</strong> completed, pending, cancelled.</li></ul></div>
+
+<div class="section">
+<h2>9. Modul Purchase Order ke Pemasok</h2>
+<p>Modul untuk mengelola pembelian obat dari supplier/pemasok. Mengganti "supplier" yang sebelumnya hanya text field di obat, menjadi alur pembelian yang terstruktur.</p>
+<h3>Fitur</h3>
+<ul><li><strong>Master data supplier:</strong> CRUD supplier dengan nama, contact person, telepon, email, alamat, catatan.</li><li><strong>Buat Purchase Order:</strong> Pilih supplier, tambah item obat dengan quantity dan unit cost, sistem hitung total cost otomatis.</li><li><strong>Status PO:</strong> draft → sent → partial (sebagian diterima) → received (lengkap) atau cancelled.</li><li><strong>Record penerimaan barang:</strong> Saat barang datang, input jumlah diterima per item. Stok obat auto-update.</li><li><strong>Auto-update stok:</strong> Saat PO diterima, stok medicine bertambah sesuai received quantity.</li><li><strong>Auto-generate PO number:</strong> Format PO-YYYYMMDD-###</li><li><strong>Cetak PO:</strong> Cetak dokumen PO untuk dikirim ke supplier.</li></ul>
+<h3>Alur PO</h3>
+<div class="flow"><span class="flow-step">Buat Draft PO</span><span class="flow-arrow">→</span><span class="flow-step">Kirim ke Supplier (Sent)</span><span class="flow-arrow">→</span><span class="flow-step">Terima Barang (Partial/Received)</span><span class="flow-arrow">→</span><span class="flow-step">Stok Auto-Update</span></div>
+<h3>Database Tables</h3>
+<table class="data"><tr><th>Tabel</th><th>Kolom Utama</th></tr>
+  <tr><td>suppliers</td><td>name, contact_person, phone, email, address, notes</td></tr>
+  <tr><td>purchase_orders</td><td>po_no, supplier_id, status, order_date, expected_date, received_date, total_cost</td></tr>
+  <tr><td>po_items</td><td>po_id, medicine_id, medicine_name, quantity, received_qty, unit_cost, subtotal</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>10. Modul Shift Kasir & Rekonsiliasi</h2>
+<p>Modul untuk akuntabilitas kasir. Setiap kasir membuka shift dengan modal awal, semua transaksi masuk ke sesi tersebut, dan tutup shift dengan rekonsiliasi kas.</p>
+<div class="card card-amber"><p><strong>Catatan workflow:</strong> Jam buka dan tutup shift dapat diinput manual (datetime picker) — tidak otomatis tercatat saat klik tombol. Ini karena di real life, saat banyak aktivitas pelayanan, kasir baru sempat input setelah pergantian shift selesai.</p></div>
+<h3>Fitur</h3>
+<ul><li><strong>Buka shift:</strong> Input jam mulai shift (bisa mundur) + modal awal kas tunai.</li><li><strong>Auto-generate session number:</strong> Format S-YYYYMMDD-###</li><li><strong>Shift aktif banner:</strong> Tampil di atas, menunjukkan shift aktif, operator, jam buka, modal.</li><li><strong>Hanya 1 shift aktif:</strong> Tidak bisa buka shift baru jika masih ada yang aktif.</li><li><strong>Tutup shift:</strong> Input jam selesai shift + hitung fisik uang di laci. Sistem hitung expected cash (modal + penjualan cash) dan selisih.</li><li><strong>Selisih kas:</strong> Lebih (surplus), kurang (defisit), atau balance (sempurna) — dengan kode warna.</li><li><strong>Cetak laporan shift:</strong> Laporan lengkap dengan semua transaksi, breakdown cash vs non-cash, dan selisih.</li><li><strong>Catatan shift:</strong> Bisa tambah catatan saat tutup shift untuk dokumentasi.</li></ul>
+<h3>Database Tables</h3>
+<table class="data"><tr><th>Tabel</th><th>Kolom Utama</th></tr>
+  <tr><td>cash_sessions</td><td>session_no, operator_name, operator_role, opening_cash, closing_cash, expected_cash, cash_difference, status (open/closed), opened_at, closed_at, notes</td></tr>
+  <tr><td>cash_session_sales</td><td>session_id, sale_id — linking transaksi ke shift</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>11. Modul Manajemen Resep Dokter</h2>
+<p>Modul untuk mencatat resep dokter yang masuk ke apotek, dengan tracking ulang dan cetak label.</p>
+<h3>Fitur</h3>
+<ul><li><strong>Catat resep:</strong> Nomor resep auto-generate (RX-YYYYMMDD-###), nama pasien, usia, jenis kelamin, nama dokter, SIP (Surat Izin Praktik) dokter.</li><li><strong>Resep racikan:</strong> Toggle racikan dengan text field untuk detail racikan (mis. "R/ Amoxicillin 250mg 10 tablet, CTM 4mg 5 tablet, aduk homogen, bagi 10 pulv...").</li><li><strong>Status resep:</strong> pending (menunggu) → dispensed (sudah diserahkan) atau cancelled (dibatalkan).</li><li><strong>Cetak label resep:</strong> Label siap tempel dengan nomor resep, nama pasien, dokter, SIP, tanggal, dan detail racikan.</li><li><strong>Search & filter:</strong> Cari berdasarkan nomor resep, pasien, atau dokter. Filter berdasarkan status.</li><li><strong>Link ke penjualan:</strong> Field sale_id nullable untuk menghubungkan resep ke transaksi penjualan.</li></ul>
+<h3>Tabel: prescriptions</h3>
+<table class="data"><tr><th>Kolom</th><th>Tipe</th><th>Deskripsi</th></tr>
+  <tr><td>rx_no</td><td>text UNIQUE</td><td>Nomor resep auto-generate</td></tr>
+  <tr><td>patient_name</td><td>text</td><td>Nama pasien</td></tr>
+  <tr><td>patient_age</td><td>integer</td><td>Usia pasien</td></tr>
+  <tr><td>patient_gender</td><td>text</td><td>L/P</td></tr>
+  <tr><td>doctor_name</td><td>text</td><td>Nama dokter</td></tr>
+  <tr><td>doctor_sip</td><td>text</td><td>Surat Izin Praktik</td></tr>
+  <tr><td>is_racikan</td><td>boolean</td><td>Apakah resep racikan</td></tr>
+  <tr><td>racikan_text</td><td>text</td><td>Detail racikan</td></tr>
+  <tr><td>sale_id</td><td>uuid FK</td><td>Link ke sales (nullable)</td></tr>
+  <tr><td>status</td><td>text</td><td>pending/dispensed/cancelled</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>12. Modul Stok Opname</h2>
+<p>Modul untuk hitung stok fisik vs sistem, catat selisih, dan adjust stok dengan audit trail. Wajib untuk audit farmasi.</p>
+<h3>Fitur</h3>
+<ul><li><strong>Mulai sesi opname:</strong> Sistem otomatis snapshot stok semua obat saat sesi dibuat (system_stock).</li><li><strong>Input hasil hitung fisik:</strong> Per obat, input jumlah fisik yang dihitung. Sistem hitung selisih real-time.</li><li><strong>Search cepat:</strong> Cari obat untuk input cepat kalau stok banyak.</li><li><strong>Status sesi:</strong> draft → completed. Setelah completed, tidak bisa diubah.</li><li><strong>Auto-adjust stok:</strong> Saat sesi diselesaikan, stok sistem auto-update sesuai hasil fisik. Setiap item ditandai adjusted: true.</li><li><strong>Audit trail:</strong> Setiap item mencatat system_stock, physical_stock, difference, dan adjusted status.</li><li><strong>Cetak laporan opname:</strong> Laporan lengkap dengan kolom sistem, fisik, selisih, dan status adjust.</li><li><strong>Auto-generate opname number:</strong> Format SO-YYYYMMDD-###</li></ul>
+<h3>Database Tables</h3>
+<table class="data"><tr><th>Tabel</th><th>Kolom Utama</th></tr>
+  <tr><td>stock_opnames</td><td>opname_no, opname_date, status (draft/completed), notes, completed_at</td></tr>
+  <tr><td>stock_opname_items</td><td>opname_id, medicine_id, system_stock, physical_stock, difference, adjusted</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>13. Modul Tracking Batch/Lot</h2>
+<p>Modul untuk melacak obat dengan batch number berbeda secara terpisah. Penting kalau ada recall dari BPOM.</p>
+<h3>Fitur</h3>
+<ul><li><strong>Catat batch:</strong> Nomor batch dari pabrik, jumlah, tanggal masuk, tanggal kadaluarsa, nama pabrik farmasi.</li><li><strong>Multiple batch per obat:</strong> Satu obat bisa punya multiple batch dengan tanggal kadaluarsa berbeda — masing-masing dilacak terpisah.</li><li><strong>Recall BPOM:</strong> Tombol khusus untuk menandai batch sebagai "Ditarik (Recall)" dengan konfirmasi. Batch yang ditarik tidak boleh dijual.</li><li><strong>Status batch:</strong> active, recalled, expired, depleted.</li><li><strong>Peringatan kadaluarsa otomatis:</strong> Warna dan label berubah sesuai urgency: Merah (≤30 hari), Amber (≤90 hari), Biru (≤180 hari), Hijau (>180 hari)</li><li><strong>Filter ganda:</strong> Berdasarkan status (aktif/recalled/expired/habis) dan urgency expiry.</li><li><strong>Search:</strong> Cari berdasarkan nomor batch, nama obat, kode, atau pabrik.</li><li><strong>Cetak laporan batch:</strong> Laporan lengkap semua batch dengan status expiry dan status batch.</li></ul>
+<h3>Tabel: medicine_batches</h3>
+<table class="data"><tr><th>Kolom</th><th>Tipe</th><th>Deskripsi</th></tr>
+  <tr><td>id</td><td>uuid PK</td><td>Primary key</td></tr>
+  <tr><td>medicine_id</td><td>uuid FK</td><td>Link ke medicines</td></tr>
+  <tr><td>batch_no</td><td>text</td><td>Nomor batch dari pabrik</td></tr>
+  <tr><td>quantity</td><td>integer</td><td>Stok di batch ini</td></tr>
+  <tr><td>received_date</td><td>date</td><td>Tanggal masuk</td></tr>
+  <tr><td>expiry_date</td><td>date</td><td>Tanggal kadaluarsa batch</td></tr>
+  <tr><td>manufacturer</td><td>text</td><td>Nama pabrik farmasi</td></tr>
+  <tr><td>status</td><td>text</td><td>active/recalled/expired/depleted</td></tr>
+</table>
+</div>
+
+<div class="section"><h2>14. Modul AI — Demand Forecasting</h2><p>Dashboard prediksi konsumsi obat berbasis AI. Khusus untuk Owner.</p><h3>Fitur</h3><ul><li><strong>Prediksi permintaan obat:</strong> AI menganalisis pola penjualan historis untuk memprediksi kebutuhan obat periode mendatang.</li><li><strong>Reorder recommendations:</strong> Rekomendasi obat yang perlu di-restock beserta jumlah optimal.</li><li><strong>Smart Stock Dashboard:</strong> Visualisasi stok kritis, overstock, dan obat dengan turnover tinggi.</li><li><strong>Priority Matrix:</strong> Matriks prioritas obat berdasarkan urgensi restock vs profit margin.</li><li><strong>AI Provider:</strong> Auto-detect dari 5 provider (Groq, OpenRouter, OpenAI, Together, Fireworks).</li><li><strong>Pengaturan AI:</strong> Modal untuk input API key, pilih provider, pilih model, test connection.</li></ul></div>
+
+<div class="section"><h2>15. Modul AI — Financial Analytics (CFO Dashboard)</h2><p>Dashboard analisis keuangan berbasis AI yang berfungsi sebagai virtual CFO. Khusus untuk Owner.</p><h3>Fitur</h3><ul><li><strong>Profit & Loss analysis:</strong> AI menganalisis revenue, COGS, gross profit, dan operating expenses.</li><li><strong>Cost variance analysis:</strong> Identifikasi selisih biaya yang tidak terduga.</li><li><strong>Trend analysis:</strong> Tren pendapatan dan pengeluaran over time.</li><li><strong>AI-generated insights:</strong> Narasi natural language dari AI tentang kondisi keuangan apotek.</li><li><strong>Rekomendasi action items:</strong> Saran konkret untuk improve margin atau reduce cost.</li></ul></div>
+
+<div class="section"><h2>16. Modul Laporan Keuangan</h2><p>Modul laporan dan analisis keuangan untuk Owner dan Apoteker.</p><h3>Fitur</h3><ul><li><strong>Revenue report:</strong> Total pendapatan per periode (harian, mingguan, bulanan).</li><li><strong>Expense tracking:</strong> Pencatatan pengeluaran operasional dengan kategori.</li><li><strong>Profit margin:</strong> Gross profit, net profit, dan margin percentage.</li><li><strong>Chart visualizations:</strong> Bar chart, line chart, pie chart untuk visualisasi data keuangan.</li><li><strong>Top selling products:</strong> Obat terlaris berdasarkan quantity dan revenue.</li><li><strong>Sales by payment method:</strong> Breakdown cash vs non-cash.</li></ul></div>
+
+<div class="section"><h2>17. Modul Perbaikan & Validasi (Quality/CAPA)</h2><p>Modul untuk Corrective and Preventive Action (CAPA), incident tracking, dan logical testing. Khusus untuk Owner.</p><h3>Fitur</h3><ul><li><strong>Incident tracking:</strong> Catat insiden dengan severity (low/medium/high/critical) dan status (open/investigating/resolved/closed).</li><li><strong>Countermeasure (CAPA):</strong> Tindakan korektif dan preventif dengan kategori (immediate/preventive), action type (SOP/visual/poka-yoke/audit/SWCS/other), effort level, dan impact level.</li><li><strong>Logical testing:</strong> Uji logika IF-THEN, causation, MECE, dan sanity check.</li><li><strong>Priority matrix:</strong> Matriks 2x2 untuk prioritisasi berdasarkan effort vs impact.</li><li><strong>Trigger linkage:</strong> Countermeasures dapat di-link ke incidents secara otomatis.</li></ul></div>
+
+<div class="section">
+<h2>18. Sistem Cetak & Printables</h2>
+<p>ApotekZ mendukung berbagai format cetak yang dapat di-generate langsung dari browser.</p>
+<h3>Format Cetak</h3>
+<table class="data"><tr><th>Format</th><th>Ukuran</th><th>Konten</th><th>Trigger</th></tr>
+  <tr><td>Struk Thermal</td><td>80mm</td><td>Logo, nama apotek, alamat, SIKL, item, total, bayar, kembalian, footer ucapan</td><td>Setelah transaksi POS</td></tr>
+  <tr><td>Invoice A4</td><td>A4</td><td>Header formal, NPWP, detail item, subtotal, PPN, total, footer arsip internal</td><td>Setelah transaksi / dari histori</td></tr>
+  <tr><td>Label Resep</td><td>300px</td><td>No resep, pasien, dokter, SIP, tanggal, detail racikan</td><td>Modul resep</td></tr>
+  <tr><td>Laporan Shift</td><td>A4</td><td>No shift, operator, waktu, modal, kas tutup, expected, selisih, semua transaksi</td><td>Modul shift kasir</td></tr>
+  <tr><td>Laporan Stok Opname</td><td>A4</td><td>No opname, tanggal, per item: sistem, fisik, selisih, adjusted</td><td>Modul stok opname</td></tr>
+  <tr><td>Laporan Batch/Lot</td><td>A4</td><td>Per batch: kode, nama, batch no, qty, expiry, status, pabrik</td><td>Modul tracking batch</td></tr>
+  <tr><td>Dokumen PO</td><td>A4</td><td>No PO, supplier, item, quantity, unit cost, total</td><td>Modul purchase order</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>19. Skema Database Lengkap</h2>
+<p>Database menggunakan PostgreSQL (Supabase) dengan 17 file migrasi. Berikut daftar lengkap tabel:</p>
+<h3>Daftar Tabel</h3>
+<table class="data"><tr><th>No</th><th>Tabel</th><th>Migrasi</th><th>Peran</th></tr>
+  <tr><td>1</td><td>medicines</td><td>20260720</td><td>Master data obat</td></tr>
+  <tr><td>2</td><td>sales</td><td>20260720</td><td>Header transaksi penjualan</td></tr>
+  <tr><td>3</td><td>sale_items</td><td>20260720</td><td>Line item transaksi</td></tr>
+  <tr><td>4</td><td>returns</td><td>20260720</td><td>Retur barang</td></tr>
+  <tr><td>5</td><td>expenses</td><td>20260720</td><td>Pengeluaran operasional</td></tr>
+  <tr><td>6</td><td>incidents</td><td>20260720</td><td>Incident tracking</td></tr>
+  <tr><td>7</td><td>countermeasures</td><td>20260720</td><td>CAPA / tindakan perbaikan</td></tr>
+  <tr><td>8</td><td>logical_tests</td><td>20260720</td><td>Uji logika & validasi</td></tr>
+  <tr><td>9</td><td>app_users</td><td>20260721</td><td>User accounts & roles</td></tr>
+  <tr><td>10</td><td>customers</td><td>20260723</td><td>Pelanggan & loyalty</td></tr>
+  <tr><td>11</td><td>suppliers</td><td>20261006</td><td>Master data pemasok</td></tr>
+  <tr><td>12</td><td>purchase_orders</td><td>20261006</td><td>Header PO</td></tr>
+  <tr><td>13</td><td>po_items</td><td>20261006</td><td>Line item PO</td></tr>
+  <tr><td>14</td><td>cash_sessions</td><td>20261006</td><td>Sesi shift kasir</td></tr>
+  <tr><td>15</td><td>cash_session_sales</td><td>20261006</td><td>Link transaksi ke shift</td></tr>
+  <tr><td>16</td><td>prescriptions</td><td>20261006</td><td>Resep dokter</td></tr>
+  <tr><td>17</td><td>stock_opnames</td><td>20261006</td><td>Header sesi opname</td></tr>
+  <tr><td>18</td><td>stock_opname_items</td><td>20261006</td><td>Item per sesi opname</td></tr>
+  <tr><td>19</td><td>medicine_batches</td><td>20261007</td><td>Tracking batch/lot obat</td></tr>
+</table>
+<h3>Daftar Migrasi (17 files)</h3>
+<table class="data"><tr><th>Tanggal</th><th>File</th><th>Deskripsi</th></tr>
+  <tr><td>2026-07-20</td><td>create_ams_schema</td><td>Schema dasar: medicines, sales, returns, expenses, incidents, countermeasures, logical_tests</td></tr>
+  <tr><td>2026-07-20</td><td>add_quality_module</td><td>Module quality/CAPA</td></tr>
+  <tr><td>2026-07-20</td><td>link_countermeasures_incidents_trigger</td><td>Trigger link countermeasure ke incident</td></tr>
+  <tr><td>2026-07-20</td><td>create_smart_stock_schema</td><td>Smart stock analysis tables</td></tr>
+  <tr><td>2026-07-21</td><td>add_demand_forecasting_schema</td><td>Demand forecasting tables</td></tr>
+  <tr><td>2026-07-21</td><td>add_financial_analytics_schema</td><td>Financial analytics tables</td></tr>
+  <tr><td>2026-07-21</td><td>add_drug_classification_and_master_data</td><td>Drug classification, dosage form, expand medicine database</td></tr>
+  <tr><td>2026-07-21</td><td>create_app_users_roles</td><td>User accounts & roles</td></tr>
+  <tr><td>2026-07-21</td><td>reseed_app_users_bcryptjs</td><td>Seed users dengan bcrypt hash</td></tr>
+  <tr><td>2026-07-22</td><td>expand_medicine_database_otc_owa</td><td>Expand database obat OTC & OWA</td></tr>
+  <tr><td>2026-07-22</td><td>add_customers_loyalty</td><td>Customer & loyalty system</td></tr>
+  <tr><td>2026-07-22</td><td>add_sales_status</td><td>Status field di sales</td></tr>
+  <tr><td>2026-10-06</td><td>create_purchase_orders</td><td>Supplier + PO + PO items</td></tr>
+  <tr><td>2026-10-06</td><td>create_cash_sessions</td><td>Cash session & link ke sales</td></tr>
+  <tr><td>2026-10-06</td><td>create_prescriptions</td><td>Prescription management</td></tr>
+  <tr><td>2026-10-06</td><td>create_stock_opname</td><td>Stock opname & items</td></tr>
+  <tr><td>2026-10-07</td><td>create_medicine_batches</td><td>Batch/lot tracking</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>20. Sistem Keamanan & RLS Policies</h2>
+<div class="card card-red"><p><strong>Row Level Security (RLS)</strong> diaktifkan pada setiap tabel di database. Setiap tabel memiliki 4 policy terpisah — satu per CRUD verb (SELECT, INSERT, UPDATE, DELETE). Tidak ada policy FOR ALL.</p></div>
+<h3>Policy Pattern</h3>
+<p>Aplikasi ini <strong>single-tenant</strong> dengan login internal untuk role management. Semua policy menggunakan TO anon, authenticated karena frontend berkomunikasi via anon key.</p>
+<pre>
+-- Pattern per tabel (4 policies)
+DROP POLICY IF EXISTS "xxx_select" ON table_name;
+CREATE POLICY "xxx_select" ON table_name
+  FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "xxx_insert" ON table_name;
+CREATE POLICY "xxx_insert" ON table_name
+  FOR INSERT TO anon, authenticated WITH CHECK (true);
+
+DROP POLICY IF EXISTS "xxx_update" ON table_name;
+CREATE POLICY "xxx_update" ON table_name
+  FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "xxx_delete" ON table_name;
+CREATE POLICY "xxx_delete" ON table_name
+  FOR DELETE TO anon, authenticated USING (true);
+</pre>
+<h3>Auth Security</h3>
+<ul><li>Password disimpan sebagai <strong>bcrypt hash</strong> di tabel app_users</li><li>Login diverifikasi via <strong>Supabase Edge Function</strong> (verify-login) — password tidak pernah terlihat di client</li><li>Session disimpan di <strong>AuthContext</strong> (React Context) — tidak ada token JWT yang persist</li><li>persistSession: false di Supabase client config — tidak ada session yang disimpan di localStorage</li></ul>
+<h3>Database Security Rules</h3>
+<ul><li>Tidak ada DROP column, DELETE column, atau rename tabel yang bisa kehilangan data</li><li>Tidak ada BEGIN/COMMIT/ROLLBACK — DO $$ ... END $$ blocks diizinkan</li><li>Setiap migrasi idempotent (IF NOT EXISTS, DROP POLICY IF EXISTS sebelum CREATE)</li><li>Foreign keys dengan ON DELETE CASCADE atau ON DELETE SET NULL sesuai konteks</li></ul>
+</div>
+
+<div class="section">
+<h2>21. UI/UX Design System</h2>
+<h3>Design Philosophy</h3>
+<div class="card card-orange"><p><strong>"Warm wood-tone"</strong> — terinspirasi light oak timber. Cream/sand backgrounds, warm brown text, copper accent. Minimalist modern futuristik. Terasa crafted dan human, bukan cold AI.</p></div>
+<h3>Typography</h3>
+<table class="data"><tr><th>Elemen</th><th>Spec</th></tr>
+  <tr><td>Font Family</td><td>Inter (Google Fonts)</td></tr>
+  <tr><td>Body line-height</td><td>1.6 (160%)</td></tr>
+  <tr><td>Heading line-height</td><td>1.2 (120%)</td></tr>
+  <tr><td>Heading letter-spacing</td><td>-0.015em</td></tr>
+  <tr><td>Font weights</td><td>3 weights: 400 (regular), 600 (semibold), 800 (extrabold)</td></tr>
+  <tr><td>Antialiasing</td><td>-webkit-font-smoothing, -moz-osx-font-smoothing</td></tr>
+</table>
+<h3>Spacing System</h3>
+<p>8px spacing system konsisten di seluruh aplikasi. Tailwind utility classes: p-1 (4px), p-2 (8px), p-3 (12px), p-4 (16px), p-6 (24px), p-8 (32px).</p>
+<h3>Border Radius</h3>
+<p>Single radius variable: --radius: 0.75rem (12px). Derivatives: lg = 0.75rem, md = calc(0.75rem - 2px), sm = calc(0.75rem - 4px).</p>
+<h3>Animation System</h3>
+<table class="data"><tr><th>Animation</th><th>Duration</th><th>Easing</th><th>Penggunaan</th></tr>
+  <tr><td>page-enter</td><td>0.4s</td><td>cubic-bezier(0.16,1,0.3,1)</td><td>Transisi antar halaman</td></tr>
+  <tr><td>fade-in</td><td>0.3s</td><td>ease-out</td><td>General fade in</td></tr>
+  <tr><td>slide-up</td><td>0.35s</td><td>cubic-bezier(0.16,1,0.3,1)</td><td>Stagger nav items</td></tr>
+  <tr><td>icon-pop</td><td>0.4s</td><td>cubic-bezier(0.34,1.56,0.64,1)</td><td>Icon aktif di nav</td></tr>
+  <tr><td>scale-in</td><td>0.2s</td><td>cubic-bezier(0.16,1,0.3,1)</td><td>Modal dialog</td></tr>
+  <tr><td>pulse-soft</td><td>2.5s</td><td>ease-in-out infinite</td><td>Status indikator</td></tr>
+  <tr><td>shimmer</td><td>2s</td><td>linear infinite</td><td>Loading skeleton</td></tr>
+</table>
+<h3>Micro-interactions</h3>
+<ul><li>.card-hover — translateY(-1px) + shadow pada hover</li><li>.press-scale — scale(0.97) pada active press</li><li>.glass — backdrop-filter blur(12px) + saturate(130%) untuk header</li><li>.stagger-item — animasi slide-up dengan delay bertahap per nav item</li><li>prefers-reduced-motion — semua animasi di-disable untuk accessibility</li></ul>
+<h3>Responsive Design</h3>
+<ul><li><strong>Mobile:</strong> Sidebar collapse ke hamburger menu, overlay backdrop</li><li><strong>Tablet:</strong> 2-column grid untuk stat cards</li><li><strong>Desktop:</strong> Sidebar persistent 72px width, 4-column stat cards</li><li><strong>Breakpoints:</strong> sm: 640px, md: 768px, lg: 1024px, xl: 1280px</li><li><strong>Scrollbar:</strong> Custom thin scrollbar (6px) dengan warna border</li></ul>
+<h3>Component Library (shadcn/ui — 40+ komponen)</h3>
+<p>accordion, alert-dialog, alert, aspect-ratio, avatar, badge, breadcrumb, button, calendar, card, carousel, chart, checkbox, collapsible, command, context-menu, dialog, drawer, dropdown-menu, form, hover-card, input-otp, input, label, menubar, navigation-menu, pagination, popover, progress, radio-group, resizable, scroll-area, select, separator, sheet, skeleton, slider, sonner, switch, table, tabs, textarea, toast, toaster, toggle, toggle-group, tooltip</p>
+</div>
+
+<div class="section">
+<h2>22. Roadmap & Pengembangan Selanjutnya</h2>
+<h3>Yang Sudah Selesai (v1.0)</h3>
+<div class="card card-green"><ul>
+  <li>Dashboard dengan stat cards & notifikasi</li>
+  <li>Kasir / POS dengan multi payment & cetak struk thermal + A4</li>
+  <li>Inventori & manajemen obat dengan klasifikasi & bentuk sediaan</li>
+  <li>Histori penjualan & retur</li>
+  <li>Manajemen pelanggan & loyalty points</li>
+  <li>Purchase Order ke pemasok dengan alur draft → sent → received</li>
+  <li>Shift kasir dengan jam input manual & rekonsiliasi kas</li>
+  <li>Manajemen resep dokter dengan racikan & cetak label</li>
+  <li>Stok opname dengan auto-adjust & audit trail</li>
+  <li>Tracking batch/lot dengan recall BPOM & peringatan kadaluarsa</li>
+  <li>AI Demand Forecasting (multi-provider)</li>
+  <li>AI Financial Analytics (CFO Dashboard)</li>
+  <li>Laporan keuangan dengan charts</li>
+  <li>Quality/CAPA module dengan incident tracking & logical testing</li>
+  <li>Auth & RBAC (3 roles: Owner, Apoteker, Kasir)</li>
+</ul></div>
+<h3>Potensi Pengembangan Selanjutnya</h3>
+<div class="card card-blue"><ul>
+  <li><strong>Integrasi BPOM Online:</strong> Auto-check nomor izin edar obat via API BPOM</li>
+  <li><strong>e-Resep:</strong> Integrasi dengan sistem e-Resep BPJS / SATUSEHAT</li>
+  <li><strong>Stok Opname dengan Barcode Scanner:</strong> Scan barcode obat untuk input cepat</li>
+  <li><strong>Mobile App:</strong> React Native app untuk kasir mobile / owner monitoring</li>
+  <li><strong>Multi-apotek:</strong> Support multiple branch dengan shared inventory atau terpisah</li>
+  <li><strong>Integrasi WhatsApp:</strong> Notifikasi stok kritis & konfirmasi pesanan via WhatsApp API</li>
+  <li><strong>Pembayaran Digital:</strong> Integrasi QRIS / e-wallet (GoPay, OVO, DANA) langsung</li>
+  <li><strong>Manual SOP Digital:</strong> SPO apotek terdigitalisasi dengan tracking compliance</li>
+  <li><strong>Trading Partner Integration:</strong> Auto-PO ke distributor besar via EDI/API</li>
+  <li><strong>Audit Trail Lengkap:</strong> Log setiap perubahan data (who, what, when) untuk audit farmasi</li>
+</ul></div>
+<h3>Catatan Regulasi Indonesia</h3>
+<div class="card card-amber"><p>Modul Purchase Order dan Repeat Order belum sepenuhnya mengikuti regulasi resmi apotek di Indonesia. Untuk produksi, perlu disesuaikan dengan:</p><ul><li>Permenkes tentang Standar Pelayanan Kefarmasian di Apotek</li><li>Peraturan tentang Cara Distribusi Obat yang Baik (CDOB)</li><li>Peraturan BPOM tentang recall obat</li><li>Peraturan tentang Penandaan (labelling) dan informasi obat</li></ul></div>
+<hr>
+<div style="text-align: center; padding: 20px 0; color: #64748b; font-size: 10px;">
+  <p><strong>ApotekZ — Product Requirements Document</strong></p>
+  <p>Versi 1.0 | Oktober 2026 | Apotek Sehat Sentosa</p>
+  <p>Dokumen ini di-generate otomatis dari analisis codebase aplikasi.</p>
+</div>
+</div>
+
+</body>
+</html>
