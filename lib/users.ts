@@ -1,28 +1,10 @@
 /**
- * ApotekZ — User & Role Configuration
+ * ApotekZ — Peran pengguna (hanya tipe dan label tampilan).
  *
- * Default credentials for the 3 user levels. Passwords are stored as
- * bcrypt hashes in the Supabase `app_users` table and verified by the
- * `verify-login` edge function. This file documents the default plaintext
- * passwords so the owner can change them later via the app UI or by
- * updating the database directly.
- *
- * ┌───────────┬──────────────────────────┬─────────────────────────────┐
- * │ Username  │ Password                 │ Role & Access               │
- * ├───────────┼──────────────────────────┼─────────────────────────────┤
- * │ owner     │ ApotekZ@Owner2025         │ Full access (all modules)   │
- * │ apoteker  │ ApotekZ@Apoteker2025     │ Dashboard, POS, Inventory,  │
- * │           │                          │ limited financial reports   │
- * │ kasir     │ ApotekZ@Kasir2025        │ POS & inventory only        │
- * └───────────┴──────────────────────────┴─────────────────────────────┘
- *
- * To add a new user (owner only):
- * 1. Generate a bcrypt hash: node -e "console.log(require('bcryptjs').hashSync('NewPass',10))"
- * 2. INSERT INTO app_users (username, password_hash, display_name, role)
- *      VALUES ('newuser', '<hash>', 'Display Name', 'kasir');
- *
- * To change a password:
- * UPDATE app_users SET password_hash='<new hash>' WHERE username='kasir';
+ * Akun dan password dikelola di Supabase Authentication (BUKAN di kode ini).
+ * Cara membuat/mengubah akun: lihat docs/PANDUAN-SETUP.md.
+ * Hak akses sebenarnya ditegakkan di database (RLS), bukan di file ini;
+ * daftar role di UI hanya mengatur menu apa yang tampil.
  */
 
 export type UserRole = 'owner' | 'apoteker' | 'kasir';
@@ -33,12 +15,6 @@ export type AppUser = {
   display_name: string;
   role: UserRole;
 };
-
-export const DEFAULT_CREDENTIALS: { username: string; password: string; role: UserRole; displayName: string }[] = [
-  { username: 'owner', password: 'ApotekZ@Owner2025', role: 'owner', displayName: 'Pemilik Apotek' },
-  { username: 'apoteker', password: 'ApotekZ@Apoteker2025', role: 'apoteker', displayName: 'Apt. Penanggung Jawab' },
-  { username: 'kasir', password: 'ApotekZ@Kasir2025', role: 'kasir', displayName: 'Staff Kasir' },
-];
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   owner: 'Pemilik',

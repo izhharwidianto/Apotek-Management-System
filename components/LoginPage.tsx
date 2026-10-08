@@ -4,7 +4,6 @@ import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import { Lock, User, Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { DEFAULT_CREDENTIALS, ROLE_BADGE_COLORS } from '@/lib/users';
 import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
@@ -123,32 +122,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Demo credentials hint */}
-          <div className="mt-6 border-t border-border pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Akun Default
-            </p>
-            <div className="space-y-1.5">
-              {DEFAULT_CREDENTIALS.map((c) => (
-                <button
-                  key={c.username}
-                  type="button"
-                  onClick={() => {
-                    setUsername(c.username);
-                    setPassword(c.password);
-                  }}
-                  className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-left text-xs transition hover:bg-muted/60"
-                >
-                  <span className="font-mono text-muted-foreground">{c.username}</span>
-                  <span className="font-mono text-muted-foreground/70">{c.password}</span>
-                  <span className={cn('rounded border px-1.5 py-0.5 text-[10px] font-bold', ROLE_BADGE_COLORS[c.role])}>
-                    {c.role}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">

@@ -23,8 +23,8 @@ import {
   ReferenceLine,
   Legend,
 } from 'recharts';
-import { supabase, type Sale, type SaleItem, type Expense, type Medicine } from '@/lib/supabase';
-import { formatIDR, formatIDRPlain, formatDate } from '@/lib/format';
+import { supabase, type Sale, type SaleItem, type Expense, type Medicine, medicinesAll } from '@/lib/supabase';
+import { formatIDR, formatIDRPlain, formatDate, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 type Period = 'daily' | 'monthly';
@@ -43,7 +43,7 @@ export default function ReportsView() {
       supabase.from('sales').select('*').order('created_at', { ascending: true }),
       supabase.from('sale_items').select('*'),
       supabase.from('expenses').select('*').order('created_at', { ascending: true }),
-      supabase.from('medicines').select('*'),
+      medicinesAll(),
     ]);
     setSales((s.data as Sale[]) ?? []);
     setSaleItems((si.data as SaleItem[]) ?? []);
@@ -135,7 +135,7 @@ export default function ReportsView() {
     const rows = aggregated
       .map(
         (a) =>
-          `<tr><td>${a.label}</td><td style="text-align:right">${formatIDR(a.revenue)}</td><td style="text-align:right">${formatIDR(a.cogs)}</td><td style="text-align:right">${formatIDR(a.expense)}</td><td style="text-align:right;color:${a.profit >= 0 ? '#16a34a' : '#dc2626'};font-weight:600">${formatIDR(a.profit)}</td><td style="text-align:center">${a.orders}</td></tr>`,
+          `<tr><td>${esc(a.label)}</td><td style="text-align:right">${formatIDR(a.revenue)}</td><td style="text-align:right">${formatIDR(a.cogs)}</td><td style="text-align:right">${formatIDR(a.expense)}</td><td style="text-align:right;color:${a.profit >= 0 ? '#16a34a' : '#dc2626'};font-weight:600">${formatIDR(a.profit)}</td><td style="text-align:center">${a.orders}</td></tr>`,
       )
       .join('');
     win.document.write(`<html><head><title>Laporan Keuangan</title>

@@ -16,8 +16,8 @@ import {
   CheckCircle2,
   Printer,
 } from 'lucide-react';
-import { supabase, type Medicine, type MedicineBatch } from '@/lib/supabase';
-import { formatDate } from '@/lib/format';
+import { supabase, type Medicine, type MedicineBatch, medicinesAll } from '@/lib/supabase';
+import { formatDate, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -67,7 +67,7 @@ export default function BatchTrackingView() {
     setLoading(true);
     const [bRes, mRes] = await Promise.all([
       supabase.from('medicine_batches').select('*').order('created_at', { ascending: false }),
-      supabase.from('medicines').select('*').order('name', { ascending: true }),
+      medicinesAll(),
     ]);
     const medList = (mRes.data as Medicine[]) ?? [];
     setMedicines(medList);
@@ -117,7 +117,7 @@ export default function BatchTrackingView() {
   }, [batches]);
 
   const handleDelete = async (b: MedicineBatch) => {
-    if (!confirm(`Hapus batch "${b.batch_no}"?`)) return;
+    if (!confirm(`Hapus batch "${esc(b.batch_no)}"?`)) return;
     await supabase.from('medicine_batches').delete().eq('id', b.id);
     loadData();
   };
@@ -139,13 +139,13 @@ export default function BatchTrackingView() {
       const exp = b.expiry_date ? formatDate(b.expiry_date) : '-';
       const expLabel = days !== null ? (days < 0 ? 'EXPIRED' : `${days} hari`) : '-';
       return `<tr>
-        <td>${b.medicine?.code ?? '-'}</td>
-        <td style="text-align:left">${b.medicine?.name ?? '-'}</td>
-        <td style="text-align:center">${b.batch_no}</td>
+        <td>${esc(b.medicine?.code ?? '-')}</td>
+        <td style="text-align:left">${esc(b.medicine?.name ?? '-')}</td>
+        <td style="text-align:center">${esc(b.batch_no)}</td>
         <td style="text-align:center">${b.quantity}</td>
         <td style="text-align:center">${exp}</td>
         <td style="text-align:center;font-weight:bold;color:${days !== null && days <= 90 ? '#dc2626' : '#16a34a'}">${expLabel}</td>
-        <td style="text-align:center">${b.manufacturer ?? '-'}</td>
+        <td style="text-align:center">${esc(b.manufacturer ?? '-')}</td>
         <td style="text-align:center">${STATUS_LABELS[b.status]}</td>
       </tr>`;
     }).join('');

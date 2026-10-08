@@ -22,8 +22,9 @@ import {
   CreditCard,
   Wallet,
 } from 'lucide-react';
-import { supabase, type Medicine, type Sale, type SaleItem, type ReturnRow, type Customer } from '@/lib/supabase';
-import { formatIDR, formatIDRPlain, formatDateTime, genInvoiceNo, daysUntil } from '@/lib/format';
+import { supabase, fetchAll, type Medicine, type Sale, type SaleItem, type ReturnRow, type Customer } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
+import { formatIDR, formatIDRPlain, formatDateTime, daysUntil } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { ReceiptPrint, InvoicePrint } from '@/components/printables';
 
@@ -33,10 +34,11 @@ type CartItem = {
 };
 
 const TAX_RATE = 0.0;
-const LOYALTY_MIN_SPEND = 20000;
 const LOYALTY_THRESHOLD = 7;
 
 export default function PosView() {
+  const { user } = useAuth();
+  const [maxCashierDiscountPct, setMaxCashierDiscountPct] = useState(10);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -57,9 +59,24 @@ export default function PosView() {
 
   const loadMedicines = async () => {
     setLoading(true);
-    const { data } = await supabase.from('medicines').select('*').order('name', { ascending: true });
-    setMedicines((data as Medicine[]) ?? []);
+    try {
+      const rows = await fetchAll<Medicine>((a, b) =>
+        supabase.from('medicines').select('*').order('name', { ascending: true }).order('id').range(a, b),
+      );
+      setMedicines(rows);
+    } catch (e) {
+      showToast('Gagal memuat obat: ' + (e instanceof Error ? e.message : 'error'), 'error');
+    }
     setLoading(false);
+  };
+
+  // Pajak & batas diskon ditentukan pemilik (tabel app_settings), bukan kasir.
+  const loadSettings = async () => {
+    const { data } = await supabase.from('app_settings').select('key, value');
+    for (const r of data ?? []) {
+      if (r.key === 'tax_rate') setTaxRate(Number(r.value) || 0);
+      if (r.key === 'max_cashier_discount_pct') setMaxCashierDiscountPct(Number(r.value) || 0);
+    }
   };
 
   const loadPendingSales = async () => {
@@ -90,6 +107,7 @@ export default function PosView() {
   useEffect(() => {
     loadMedicines();
     loadPendingSales();
+    loadSettings();
   }, []);
 
   const filtered = useMemo(() => {
@@ -208,7 +226,7 @@ export default function PosView() {
     return () => window.removeEventListener('keydown', handler);
   }, [filtered, highlightedIndex, cart, showReceipt, showRetur, showCheckout, showPending, resumeSale, addToCart]);
 
-  const handleCheckout = async (custName: string, custPhone: string, paidAmount: number, payMethod: string) => {
+  const handleCheckout = async (custName: string, custPhone: string, paidAmount: number, payMethod: string, rxNo: string) => {
     if (cart.length === 0) {
       showToast('Keranjang kosong', 'error');
       return;
@@ -219,97 +237,26 @@ export default function PosView() {
     }
     setProcessing(true);
 
-    // Find or create customer
-    let customerId: string | null = null;
-    const finalName = custName.trim() || 'Umum';
-    if (custName.trim() && custPhone.trim()) {
-      const { data: existing } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('phone', custPhone.trim())
-        .maybeSingle();
-      if (existing) {
-        customerId = (existing as Customer).id;
-      } else {
-        const { data: newCust, error } = await supabase
-          .from('customers')
-          .insert({ name: custName.trim(), phone: custPhone.trim() })
-          .select()
-          .single();
-        if (!error && newCust) customerId = (newCust as Customer).id;
-      }
-    } else if (custName.trim()) {
-      const { data: existing } = await supabase
-        .from('customers')
-        .select('*')
-        .ilike('name', custName.trim())
-        .maybeSingle();
-      if (existing) customerId = (existing as Customer).id;
-    }
-
-    const change = Math.max(0, paidAmount - total);
-    const invoiceNo = genInvoiceNo();
-    const saleRow = {
-      invoice_no: invoiceNo,
-      customer_name: finalName,
-      customer_id: customerId,
-      status: 'receipt_not_printed',
-      subtotal,
-      tax: taxAmount,
-      discount,
-      total,
-      paid: paidAmount,
-      change,
-      payment_method: payMethod,
-    };
-    const { data: saleData, error: saleErr } = await supabase
-      .from('sales')
-      .insert(saleRow)
-      .select()
-      .single();
-    if (saleErr || !saleData) {
-      showToast('Gagal menyimpan transaksi: ' + (saleErr?.message ?? 'unknown'), 'error');
+    // Semua dihitung & divalidasi server dalam satu transaksi: harga, stok, pajak,
+    // batas diskon, aturan resep, nomor invoice. Gagal berarti tidak ada yang tersimpan.
+    const { data, error } = await supabase.rpc('checkout_sale', {
+      p_customer_name: custName.trim(),
+      p_customer_phone: custPhone.trim(),
+      p_discount: discount,
+      p_paid: paidAmount,
+      p_payment_method: payMethod,
+      p_items: cart.map((c) => ({ medicine_id: c.medicine.id, qty: c.qty })),
+      p_rx_no: rxNo.trim() || null,
+    });
+    if (error || !data) {
+      showToast(error?.message ?? 'Gagal menyimpan transaksi', 'error');
       setProcessing(false);
+      loadMedicines(); // stok di layar mungkin sudah berubah
       return;
     }
-    const items = cart.map((c) => ({
-      sale_id: (saleData as Sale).id,
-      medicine_id: c.medicine.id,
-      medicine_name: c.medicine.name,
-      quantity: c.qty,
-      price: c.medicine.sell_price,
-      subtotal: c.medicine.sell_price * c.qty,
-    }));
-    const { error: itemsErr } = await supabase.from('sale_items').insert(items);
-    if (itemsErr) {
-      showToast('Gagal menyimpan item: ' + itemsErr.message, 'error');
-      setProcessing(false);
-      return;
-    }
-    // Decrement stock
-    await Promise.all(
-      cart.map((c) => {
-        const newStock = Math.max(0, c.medicine.stock - c.qty);
-        return supabase.from('medicines').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', c.medicine.id);
-      }),
-    );
+    const result = data as { sale: Sale; items: SaleItem[] };
 
-    // Update customer loyalty stats
-    if (customerId) {
-      const qualifies = total >= LOYALTY_MIN_SPEND;
-      const { data: cust } = await supabase.from('customers').select('*').eq('id', customerId).maybeSingle();
-      if (cust) {
-        const existing = cust as Customer;
-        await supabase.from('customers').update({
-          total_visits: existing.total_visits + 1,
-          total_spent: Number(existing.total_spent) + total,
-          loyalty_points: existing.loyalty_points + (qualifies ? 1 : 0),
-          updated_at: new Date().toISOString(),
-        }).eq('id', customerId);
-      }
-    }
-
-    setLastSale({ ...(saleData as Sale), items: items as SaleItem[] });
+    setLastSale({ ...result.sale, items: result.items });
     setShowCheckout(false);
     setShowReceipt(true);
     clearCart();
@@ -321,7 +268,7 @@ export default function PosView() {
 
   const printDocument = async (mode: 'receipt' | 'invoice') => {
     if (lastSale) {
-      await supabase.from('sales').update({ status: 'completed' }).eq('id', lastSale.id);
+      await supabase.rpc('mark_sale_completed', { p_sale_id: lastSale.id });
       loadPendingSales();
     }
     if (mode === 'invoice') {
@@ -336,13 +283,20 @@ export default function PosView() {
   // Resume a pending/receipt_not_printed sale
   const handleResumeSale = async (sale: Sale & { items: SaleItem[] }) => {
     if (sale.status === 'pending') {
-      // Load items back into cart for editing
-      const items = sale.items;
-      const medIds = items.map((it) => it.medicine_id).filter(Boolean) as string[];
+      // Batalkan transaksi lama (stok kembali, tercatat di log) lalu muat ulang ke keranjang untuk diedit.
+      const { error } = await supabase.rpc('void_sale', {
+        p_sale_id: sale.id,
+        p_reason: 'Dilanjutkan ulang dan diedit oleh kasir',
+      });
+      if (error) {
+        showToast(error.message, 'error');
+        return;
+      }
+      const medIds = sale.items.map((it) => it.medicine_id).filter(Boolean) as string[];
       const { data: meds } = await supabase.from('medicines').select('*').in('id', medIds);
       const medMap = new Map<string, Medicine>();
-      (meds as Medicine[] ?? []).forEach((m) => medMap.set(m.id, m));
-      const newCart: CartItem[] = items
+      ((meds as Medicine[]) ?? []).forEach((m) => medMap.set(m.id, m));
+      const newCart: CartItem[] = sale.items
         .map((it) => {
           const med = medMap.get(it.medicine_id ?? '');
           if (!med) return null;
@@ -351,11 +305,10 @@ export default function PosView() {
         .filter((c): c is CartItem => c !== null);
       setCart(newCart);
       setDiscount(Number(sale.discount));
-      // Delete the pending sale so we can re-create it on checkout
-      await supabase.from('sale_items').delete().eq('sale_id', sale.id);
-      await supabase.from('sales').delete().eq('id', sale.id);
       setResumeSale(null);
       setShowPending(false);
+      loadPendingSales();
+      loadMedicines();
       showToast('Transaksi dimuat ke keranjang, silakan edit dan lanjutkan', 'success');
     } else if (sale.status === 'receipt_not_printed') {
       // Show receipt for printing
@@ -367,21 +320,15 @@ export default function PosView() {
   };
 
   const cancelPendingSale = async (saleId: string) => {
-    // Restore stock and delete
-    const { data: items } = await supabase.from('sale_items').select('*').eq('sale_id', saleId);
-    if (items) {
-      await Promise.all((items as SaleItem[]).map(async (it) => {
-        if (it.medicine_id) {
-          const { data: med } = await supabase.from('medicines').select('stock').eq('id', it.medicine_id).maybeSingle();
-          if (med) {
-            const newStock = (med as Medicine).stock + it.quantity;
-            await supabase.from('medicines').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', it.medicine_id);
-          }
-        }
-      }));
+    if (!confirm('Batalkan transaksi ini? Stok akan dikembalikan dan pembatalan tercatat.')) return;
+    const { error } = await supabase.rpc('void_sale', {
+      p_sale_id: saleId,
+      p_reason: 'Dibatalkan sebelum struk dicetak',
+    });
+    if (error) {
+      showToast(error.message, 'error');
+      return;
     }
-    await supabase.from('sale_items').delete().eq('sale_id', saleId);
-    await supabase.from('sales').delete().eq('id', saleId);
     loadPendingSales();
     loadMedicines();
     showToast('Transaksi dibatalkan, stok dikembalikan', 'success');
@@ -540,14 +487,12 @@ export default function PosView() {
                 className="h-7 w-28 rounded-md border border-border bg-background px-2 text-right text-sm outline-none focus:border-primary"
               />
             </div>
+            {user?.role === 'kasir' && (
+              <p className="text-right text-[10px] text-muted-foreground">Batas diskon kasir {maxCashierDiscountPct}% dari subtotal</p>
+            )}
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Pajak (%)</span>
-              <input
-                type="number"
-                value={Math.round(taxRate * 100)}
-                onChange={(e) => setTaxRate(Math.max(0, (parseInt(e.target.value) || 0) / 100))}
-                className="h-7 w-28 rounded-md border border-border bg-background px-2 text-right text-sm outline-none focus:border-primary"
-              />
+              <span className="text-muted-foreground">Pajak (diatur pemilik)</span>
+              <span className="text-sm font-semibold text-foreground">{+(taxRate * 100).toFixed(2)}%</span>
             </div>
             <div className="flex items-center justify-between border-t border-dashed border-border pt-1.5">
               <span className="font-bold text-foreground">Total</span>
@@ -576,6 +521,13 @@ export default function PosView() {
       {showCheckout && (
         <CheckoutModal
           total={total}
+          controlled={
+            cart.some((c) => c.medicine.drug_classification === 'Obat Narkotika')
+              ? 'narkotika'
+              : cart.some((c) => c.medicine.drug_classification === 'Obat Keras')
+                ? 'keras'
+                : null
+          }
           onClose={() => setShowCheckout(false)}
           onSubmit={handleCheckout}
           processing={processing}
@@ -623,15 +575,18 @@ export default function PosView() {
 /* ---------- Checkout Modal ---------- */
 function CheckoutModal({
   total,
+  controlled,
   onClose,
   onSubmit,
   processing,
 }: {
   total: number;
+  controlled: 'narkotika' | 'keras' | null;
   onClose: () => void;
-  onSubmit: (name: string, phone: string, paid: number, method: string) => void;
+  onSubmit: (name: string, phone: string, paid: number, method: string, rxNo: string) => void;
   processing: boolean;
 }) {
+  const [rxNo, setRxNo] = useState('');
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
   const [paid, setPaid] = useState(total);
@@ -648,10 +603,11 @@ function CheckoutModal({
       return;
     }
     const t = setTimeout(async () => {
+      const safe = q.replace(/[,()%*\\]/g, ' ').trim();
       const { data } = await supabase
         .from('customers')
         .select('*')
-        .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
+        .or(`name.ilike.%${safe}%,phone.ilike.%${safe}%`)
         .limit(5);
       setSearchResults((data as Customer[]) ?? []);
       setShowDropdown(true);
@@ -725,6 +681,22 @@ function CheckoutModal({
             </div>
           </div>
 
+          {controlled && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+              <label className="text-xs font-semibold text-amber-800 dark:text-amber-300">
+                {controlled === 'narkotika'
+                  ? 'No. Resep (WAJIB, hanya Apoteker/Owner yang boleh menyerahkan Narkotika)'
+                  : 'No. Resep (WAJIB untuk Obat Keras; Apoteker boleh mengosongkan untuk OWA)'}
+              </label>
+              <input
+                value={rxNo}
+                onChange={(e) => setRxNo(e.target.value)}
+                placeholder="Nomor resep yang sudah dicatat di menu Resep Dokter"
+                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          )}
+
           {/* Payment method */}
           <div>
             <label className="text-xs font-semibold text-muted-foreground">Metode Pembayaran</label>
@@ -768,7 +740,7 @@ function CheckoutModal({
 
         <div className="mt-4 flex gap-2">
           <button
-            onClick={() => onSubmit(custName, custPhone, paid, method)}
+            onClick={() => onSubmit(custName, custPhone, paid, method, rxNo)}
             disabled={processing || paid < total}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
@@ -1099,27 +1071,15 @@ function ReturModal({
       return;
     }
     setSubmitting(true);
-    const refund = selectedItem.price * qty;
-    const { error } = await supabase.from('returns').insert({
-      sale_id: foundSale.id,
-      invoice_no: foundSale.invoice_no,
-      medicine_id: selectedItem.medicine_id,
-      medicine_name: selectedItem.medicine_name,
-      quantity: qty,
-      reason: reason.trim(),
-      refund_amount: refund,
+    const { error } = await supabase.rpc('process_return', {
+      p_sale_item_id: selectedItem.id,
+      p_qty: qty,
+      p_reason: reason.trim(),
     });
     if (error) {
       showToast('Gagal mencatat retur: ' + error.message, 'error');
       setSubmitting(false);
       return;
-    }
-    if (selectedItem.medicine_id) {
-      const { data: med } = await supabase.from('medicines').select('stock').eq('id', selectedItem.medicine_id).maybeSingle();
-      if (med) {
-        const newStock = (med as Medicine).stock + qty;
-        await supabase.from('medicines').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', selectedItem.medicine_id);
-      }
     }
     setSubmitting(false);
     onDone();

@@ -22,9 +22,8 @@ import {
   type Medicine,
   type Supplier,
   type PurchaseOrder,
-  type PoItem,
-} from '@/lib/supabase';
-import { formatIDR, formatDate } from '@/lib/format';
+  type PoItem, medicinesAll } from '@/lib/supabase';
+import { formatIDR, formatDate, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 type PoWithItems = PurchaseOrder & { supplier?: Supplier | null; items: PoItem[] };
@@ -69,7 +68,7 @@ export default function PurchaseOrderView() {
     const [poRes, supRes, medRes] = await Promise.all([
       supabase.from('purchase_orders').select('*').order('created_at', { ascending: false }),
       supabase.from('suppliers').select('*').order('name', { ascending: true }),
-      supabase.from('medicines').select('*').order('name', { ascending: true }),
+      medicinesAll(),
     ]);
     const poList = (poRes.data as PurchaseOrder[]) ?? [];
     const supList = (supRes.data as Supplier[]) ?? [];
@@ -127,23 +126,8 @@ export default function PurchaseOrderView() {
   const handleReceivePo = async (po: PoWithItems) => {
     if (!confirm(`Tandai semua item PO "${po.po_no}" sebagai diterima? Stok obat akan bertambah otomatis.`)) return;
 
-    for (const item of po.items) {
-      if (item.medicine_id) {
-        const med = medicines.find((m) => m.id === item.medicine_id);
-        if (med) {
-          const newStock = med.stock + (item.quantity - item.received_qty);
-          await supabase.from('medicines').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', med.id);
-        }
-      }
-      await supabase.from('po_items').update({ received_qty: item.quantity }).eq('id', item.id);
-    }
-
-    await supabase.from('purchase_orders').update({
-      status: 'received',
-      received_date: new Date().toISOString().slice(0, 10),
-      updated_at: new Date().toISOString(),
-    }).eq('id', po.id);
-
+    const { error } = await supabase.rpc('receive_purchase_order', { p_po_id: po.id });
+    if (error) window.alert(error.message);
     loadData();
   };
 
@@ -160,12 +144,12 @@ export default function PurchaseOrderView() {
     const win = window.open('', '_blank');
     if (!win) return;
     const rows = po.items.map((it) => `<tr>
-      <td>${it.medicine_name}</td>
+      <td>${esc(it.medicine_name)}</td>
       <td style="text-align:center">${it.quantity}</td>
       <td style="text-align:right">${formatIDR(it.unit_cost)}</td>
       <td style="text-align:right">${formatIDR(it.subtotal)}</td>
     </tr>`).join('');
-    win.document.write(`<html><head><title>${po.po_no}</title>
+    win.document.write(`<html><head><title>${esc(po.po_no)}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}
         h1{font-size:18px;margin:0 0 4px} h2{font-size:14px;margin:0 0 12px}
@@ -178,10 +162,10 @@ export default function PurchaseOrderView() {
         .foot{margin-top:20px;font-size:11px;color:#94a3b8;text-align:center}
       </style></head><body>
       <h1>Purchase Order</h1>
-      <h2>${po.po_no}</h2>
+      <h2>${esc(po.po_no)}</h2>
       <div class="info">
-        <div><b>Pemasok:</b> ${po.supplier?.name ?? '-'}<br/><b>Tgl Order:</b> ${formatDate(po.order_date)}<br/><b>Estimasi:</b> ${formatDate(po.expected_date)}</div>
-        <div><b>Status:</b> ${STATUS_LABELS[po.status]}<br/><b>Catatan:</b> ${po.notes ?? '-'}</div>
+        <div><b>Pemasok:</b> ${esc(po.supplier?.name ?? '-')}<br/><b>Tgl Order:</b> ${formatDate(po.order_date)}<br/><b>Estimasi:</b> ${formatDate(po.expected_date)}</div>
+        <div><b>Status:</b> ${STATUS_LABELS[po.status]}<br/><b>Catatan:</b> ${esc(po.notes ?? '-')}</div>
       </div>
       <table><thead><tr><th style="text-align:left">Obat</th><th>Qty</th><th style="text-align:right">Harga</th><th style="text-align:right">Subtotal</th></tr></thead>
       <tbody>${rows}</tbody></table>

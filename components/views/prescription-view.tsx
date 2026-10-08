@@ -16,7 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { supabase, type Prescription } from '@/lib/supabase';
-import { formatDate } from '@/lib/format';
+import { formatDate, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -98,7 +98,7 @@ export default function PrescriptionView() {
   const printLabel = (p: Prescription) => {
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(`<html><head><title>Label ${p.rx_no}</title>
+    win.document.write(`<html><head><title>Label ${esc(p.rx_no)}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:20px;color:#1e293b}
         .label{width:300px;border:2px solid #0ea5e9;border-radius:8px;padding:12px;font-size:11px}
@@ -109,12 +109,12 @@ export default function PrescriptionView() {
       </style></head><body>
       <div class="label">
         <h3>ApotekZ — Label Resep</h3>
-        <div class="row"><b>No. Resep</b>${p.rx_no}</div>
-        <div class="row"><b>Pasien</b>${p.patient_name}${p.patient_age ? `, ${p.patient_age} thn` : ''} ${p.patient_gender ?? ''}</div>
-        <div class="row"><b>Dokter</b>${p.doctor_name ?? '-'} ${p.doctor_sip ? `(${p.doctor_sip})` : ''}</div>
+        <div class="row"><b>No. Resep</b>${esc(p.rx_no)}</div>
+        <div class="row"><b>Pasien</b>${esc(p.patient_name)}${p.patient_age ? `, ${Number(p.patient_age)} thn` : ''} ${esc(p.patient_gender ?? '')}</div>
+        <div class="row"><b>Dokter</b>${esc(p.doctor_name ?? '-')} ${p.doctor_sip ? `(${esc(p.doctor_sip)})` : ''}</div>
         <div class="row"><b>Tgl Terima</b>${formatDate(p.received_date)}</div>
-        ${p.is_racikan && p.racikan_text ? `<div class="racikan"><b>Racikan:</b><br/>${p.racikan_text}</div>` : ''}
-        ${p.notes ? `<div class="row" style="margin-top:4px"><b>Catatan</b>${p.notes}</div>` : ''}
+        ${p.is_racikan && p.racikan_text ? `<div class="racikan"><b>Racikan:</b><br/>${esc(p.racikan_text)}</div>` : ''}
+        ${p.notes ? `<div class="row" style="margin-top:4px"><b>Catatan</b>${esc(p.notes)}</div>` : ''}
         <div class="foot">Dicetak ${new Date().toLocaleString('id-ID')}</div>
       </div>
       </body></html>`);
