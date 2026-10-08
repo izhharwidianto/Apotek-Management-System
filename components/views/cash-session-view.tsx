@@ -21,7 +21,7 @@ import {
   type CashSession,
   type Sale,
 } from '@/lib/supabase';
-import { formatIDR, formatDateTime } from '@/lib/format';
+import { formatIDR, formatDateTime, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 
@@ -117,14 +117,14 @@ export default function CashSessionView() {
     const rows = session.sales.map((s) => `<tr>
       <td>${s.invoice_no}</td>
       <td>${formatDateTime(s.created_at)}</td>
-      <td>${s.customer_name}</td>
-      <td style="text-align:center">${s.payment_method}</td>
+      <td>${esc(s.customer_name)}</td>
+      <td style="text-align:center">${esc(s.payment_method)}</td>
       <td style="text-align:right">${formatIDR(Number(s.total))}</td>
     </tr>`).join('');
     const cashSales = session.sales.filter((s) => s.payment_method === 'cash');
     const cashRev = cashSales.reduce((a, s) => a + Number(s.total), 0);
     const nonCashRev = session.sales.filter((s) => s.payment_method !== 'cash').reduce((a, s) => a + Number(s.total), 0);
-    win.document.write(`<html><head><title>Laporan Shift ${session.session_no}</title>
+    win.document.write(`<html><head><title>Laporan Shift ${esc(session.session_no)}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}
         h1{font-size:18px;margin:0 0 4px} h2{font-size:12px;margin:0 0 16px;color:#64748b}
@@ -138,7 +138,7 @@ export default function CashSessionView() {
         .foot{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center}
       </style></head><body>
       <h1>Laporan Shift Kasir</h1>
-      <h2>${session.session_no} — ${session.operator_name}</h2>
+      <h2>${esc(session.session_no)} — ${esc(session.operator_name)}</h2>
       <div class="summary">
         <div><b>Buka Shift</b>${formatDateTime(session.opened_at)}</div>
         <div><b>Tutup Shift</b>${formatDateTime(session.closed_at)}</div>

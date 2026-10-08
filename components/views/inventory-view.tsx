@@ -15,8 +15,8 @@ import {
   X,
   AlertTriangle,
 } from 'lucide-react';
-import { supabase, type Medicine, DRUG_CLASSIFICATIONS, DOSAGE_FORMS } from '@/lib/supabase';
-import { formatIDR, formatDate, daysUntil } from '@/lib/format';
+import { supabase, type Medicine, DRUG_CLASSIFICATIONS, DOSAGE_FORMS, medicinesAll } from '@/lib/supabase';
+import { formatIDR, formatDate, daysUntil, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import SmartStockDashboard from '@/components/SmartStockDashboard';
 
@@ -41,7 +41,7 @@ export default function InventoryView() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from('medicines').select('*').order('name', { ascending: true });
+    const { data } = await medicinesAll();
     setMedicines((data as Medicine[]) ?? []);
     setLoading(false);
   };
@@ -99,9 +99,9 @@ export default function InventoryView() {
         const stockCls = m.stock <= m.reorder_point ? 'color:#dc2626;font-weight:600;' : '';
         const clsColor = CLASSIFICATION_COLORS[m.drug_classification] ?? '';
         return `<tr>
-          <td>${m.code}</td><td style="text-align:left">${m.name}<br/><span style="font-size:10px;color:#64748b">${m.generic_name ?? ''}</span></td>
-          <td style="font-size:10px">${m.drug_classification}</td><td style="font-size:10px">${m.dosage_form}</td>
-          <td style="${stockCls}">${m.stock} ${m.unit}</td>
+          <td>${esc(m.code)}</td><td style="text-align:left">${esc(m.name)}<br/><span style="font-size:10px;color:#64748b">${esc(m.generic_name ?? '')}</span></td>
+          <td style="font-size:10px">${esc(m.drug_classification)}</td><td style="font-size:10px">${esc(m.dosage_form)}</td>
+          <td style="${stockCls}">${m.stock} ${esc(m.unit)}</td>
           <td>${formatIDR(m.sell_price)}</td>
           <td style="${expCls}">${formatDate(m.expiry_date)}</td>
           <td>${m.reorder_point}</td>

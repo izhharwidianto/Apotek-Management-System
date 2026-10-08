@@ -1,0 +1,8 @@
+{
+  "name": "apotek-db-test",
+  "private": true,
+  "type": "module",
+  "description": "Uji otomatis migrasi, RLS dan fungsi database (Postgres tertanam, tidak menyentuh Supabase asli).",
+  "scripts": { "test": "node run.mjs" },
+  "dependencies": { "embedded-postgres": "17.10.0-beta.17", "pg": "^8.13.0" }
+}

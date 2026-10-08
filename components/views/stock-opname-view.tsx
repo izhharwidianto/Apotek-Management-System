@@ -15,8 +15,8 @@ import {
   Save,
   Lock,
 } from 'lucide-react';
-import { supabase, type Medicine, type StockOpname, type StockOpnameItem } from '@/lib/supabase';
-import { formatDate } from '@/lib/format';
+import { supabase, type Medicine, type StockOpname, type StockOpnameItem, medicinesAll } from '@/lib/supabase';
+import { formatDate, esc } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 function genOpnameNo(): string {
@@ -40,7 +40,7 @@ export default function StockOpnameView() {
     setLoading(true);
     const [soRes, medRes] = await Promise.all([
       supabase.from('stock_opnames').select('*').order('created_at', { ascending: false }),
-      supabase.from('medicines').select('*').order('name', { ascending: true }),
+      medicinesAll(),
     ]);
     const soList = (soRes.data as StockOpname[]) ?? [];
     const medList = (medRes.data as Medicine[]) ?? [];
@@ -89,24 +89,8 @@ export default function StockOpnameView() {
   const handleComplete = async (opname: OpnameWithItems) => {
     if (!confirm(`Selesaikan opname "${opname.opname_no}"? Semua stok akan di-adjust sesuai hasil hitung fisik dan tidak bisa diubah lagi.`)) return;
 
-    for (const item of opname.items) {
-      if (item.physical_stock !== null && item.physical_stock !== item.system_stock && !item.adjusted) {
-        await supabase.from('medicines').update({
-          stock: item.physical_stock,
-          updated_at: new Date().toISOString(),
-        }).eq('id', item.medicine_id);
-        await supabase.from('stock_opname_items').update({
-          difference: item.physical_stock - item.system_stock,
-          adjusted: true,
-        }).eq('id', item.id);
-      }
-    }
-
-    await supabase.from('stock_opnames').update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-    }).eq('id', opname.id);
-
+    const { error } = await supabase.rpc('complete_stock_opname', { p_opname_id: opname.id });
+    if (error) window.alert(error.message);
     loadData();
   };
 
@@ -114,14 +98,14 @@ export default function StockOpnameView() {
     const win = window.open('', '_blank');
     if (!win) return;
     const rows = opname.items.map((it) => `<tr>
-      <td>${it.medicine?.code ?? '-'}</td>
-      <td style="text-align:left">${it.medicine?.name ?? '-'}</td>
+      <td>${esc(it.medicine?.code ?? '-')}</td>
+      <td style="text-align:left">${esc(it.medicine?.name ?? '-')}</td>
       <td style="text-align:center">${it.system_stock}</td>
       <td style="text-align:center">${it.physical_stock ?? '-'}</td>
       <td style="text-align:center;font-weight:bold;color:${it.difference && it.difference !== 0 ? '#dc2626' : '#16a34a'}">${it.difference !== null ? (it.difference > 0 ? '+' + it.difference : String(it.difference)) : '-'}</td>
       <td style="text-align:center">${it.adjusted ? 'Ya' : '-'}</td>
     </tr>`).join('');
-    win.document.write(`<html><head><title>Stok Opname ${opname.opname_no}</title>
+    win.document.write(`<html><head><title>Stok Opname ${esc(opname.opname_no)}</title>
       <style>
         body{font-family:Arial,sans-serif;padding:24px;color:#1e293b}
         h1{font-size:18px;margin:0 0 4px} h2{font-size:12px;margin:0 0 16px;color:#64748b}
@@ -131,7 +115,7 @@ export default function StockOpnameView() {
         .foot{margin-top:20px;font-size:10px;color:#94a3b8;text-align:center}
       </style></head><body>
       <h1>Laporan Stok Opname</h1>
-      <h2>${opname.opname_no} — ${formatDate(opname.opname_date)}</h2>
+      <h2>${esc(opname.opname_no)} — ${formatDate(opname.opname_date)}</h2>
       <table><thead><tr><th style="text-align:left">Kode</th><th style="text-align:left">Nama Obat</th><th>Sistem</th><th>Fisik</th><th>Selisih</th><th>Adjusted</th></tr></thead>
       <tbody>${rows}</tbody></table>
       <div class="foot">Dicetak oleh ApotekZ — ${new Date().toLocaleString('id-ID')}</div>

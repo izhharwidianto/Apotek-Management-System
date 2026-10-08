@@ -15,7 +15,7 @@ import {
   Settings,
 } from 'lucide-react';
 import AISettingsModal from '@/components/AISettingsModal';
-import { supabase, type Medicine } from '@/lib/supabase';
+import { supabase, type Medicine, medicinesAll } from '@/lib/supabase';
 import {
   analyzeInventoryWithAI,
   localFallbackInsight,
@@ -42,7 +42,7 @@ export default function SmartStockDashboard() {
   const load = async () => {
     setLoading(true);
     const [medRes, saleItemsRes] = await Promise.all([
-      supabase.from('medicines').select('*').order('name', { ascending: true }),
+      medicinesAll(),
       supabase.from('sale_items').select('medicine_id, quantity, created_at'),
     ]);
     const meds = (medRes.data as Medicine[]) ?? [];

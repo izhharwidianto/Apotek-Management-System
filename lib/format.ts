@@ -46,3 +46,8 @@ export const genInvoiceNo = (): string => {
   const time = String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
   return `INV-${ymd}-${time}${rand}`;
 };
+
+// Escape HTML untuk teks yang berasal dari database sebelum disisipkan ke
+// jendela cetak (document.write). Mencegah suntikan skrip (XSS).
+export const esc = (v: unknown): string =>
+  String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);

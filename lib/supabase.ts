@@ -1,11 +1,40 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY belum diisi. Lihat docs/PANDUAN-SETUP.md.',
+  );
+}
+
+// Sesi login dikelola Supabase Auth (token berumur pendek, diperbarui otomatis,
+// diverifikasi server). Hak akses sebenarnya ditegakkan oleh RLS di database.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'apotekz-auth' },
 });
+
+/**
+ * Ambil SEMUA baris walau lebih dari 1000 (batas bawaan Supabase).
+ * Contoh:
+ *   fetchAll<Medicine>((a, b) => supabase.from('medicines').select('*').order('name').order('id').range(a, b))
+ * Wajib ada .order() yang stabil supaya halaman tidak tumpang tindih.
+ */
+export async function fetchAll<T>(
+  build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  pageSize = 1000,
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await build(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+}
 
 export type Medicine = {
   id: string;
@@ -64,6 +93,9 @@ export type Sale = {
   paid: number;
   change: number;
   payment_method: string;
+  cashier_id?: string | null;
+  cashier_name?: string | null;
+  rx_no?: string | null;
   created_at: string;
 };
 
@@ -268,3 +300,11 @@ export type MedicineBatch = {
   created_at: string;
   updated_at: string;
 };
+
+/** Semua obat (lebih dari 1000 baris pun), bentuk hasil sama seperti query Supabase. */
+export async function medicinesAll(): Promise<{ data: Medicine[]; error: null }> {
+  const data = await fetchAll<Medicine>((a, b) =>
+    supabase.from('medicines').select('*').order('name', { ascending: true }).order('id').range(a, b),
+  );
+  return { data, error: null };
+}

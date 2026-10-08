@@ -22,6 +22,7 @@ import {
   FileText,
   Eye,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 import { supabase, type Sale, type SaleItem, type Customer, type Medicine } from '@/lib/supabase';
 import { formatIDR, formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -128,25 +129,17 @@ export default function SalesHistoryView() {
   // Actions for incomplete transactions
   const markCompleted = async (saleId: string) => {
     setActionLoading(saleId);
-    await supabase.from('sales').update({ status: 'completed' }).eq('id', saleId);
+    await supabase.rpc('mark_sale_completed', { p_sale_id: saleId });
     setActionLoading(null);
     loadSales();
   };
 
   const cancelPendingSale = async (sale: SaleWithItems) => {
+    const reason = window.prompt(`Alasan membatalkan ${sale.invoice_no}? (wajib, tercatat di log)`, 'Dibatalkan sebelum struk dicetak');
+    if (!reason || reason.trim().length < 3) return;
     setActionLoading(sale.id);
-    // Restore stock
-    await Promise.all((sale.items ?? []).map(async (it) => {
-      if (it.medicine_id) {
-        const { data: med } = await supabase.from('medicines').select('stock').eq('id', it.medicine_id).maybeSingle();
-        if (med) {
-          const newStock = (med as Medicine).stock + it.quantity;
-          await supabase.from('medicines').update({ stock: newStock, updated_at: new Date().toISOString() }).eq('id', it.medicine_id);
-        }
-      }
-    }));
-    await supabase.from('sale_items').delete().eq('sale_id', sale.id);
-    await supabase.from('sales').delete().eq('id', sale.id);
+    const { error } = await supabase.rpc('void_sale', { p_sale_id: sale.id, p_reason: reason.trim() });
+    if (error) window.alert(error.message);
     setActionLoading(null);
     loadSales();
   };
@@ -523,10 +516,24 @@ function SaleViewModal({
   onStatusChanged: () => void;
 }) {
   const [viewMode, setViewMode] = useState<'receipt' | 'invoice'>('invoice');
+  const { user } = useAuth();
+  const canVoid = user?.role === 'owner' || user?.role === 'apoteker';
+
+  const voidSale = async () => {
+    const reason = window.prompt(`Alasan membatalkan transaksi ${sale.invoice_no}? Stok akan dikembalikan. (wajib, tercatat di log)`);
+    if (!reason || reason.trim().length < 3) return;
+    const { error } = await supabase.rpc('void_sale', { p_sale_id: sale.id, p_reason: reason.trim() });
+    if (error) {
+      window.alert(error.message);
+      return;
+    }
+    onStatusChanged();
+    onClose();
+  };
 
   const printDocument = async (mode: 'receipt' | 'invoice') => {
     if (sale.status !== 'completed') {
-      await supabase.from('sales').update({ status: 'completed' }).eq('id', sale.id);
+      await supabase.rpc('mark_sale_completed', { p_sale_id: sale.id });
     }
     if (mode === 'invoice') {
       document.body.classList.add('print-invoice-mode');
@@ -595,6 +602,14 @@ function SaleViewModal({
               </button>
             )}
           </div>
+
+          {canVoid && (
+            <div className="mb-2 flex justify-end">
+              <button onClick={voidSale} className="rounded-lg border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10">
+                Batalkan transaksi (void)
+              </button>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button onClick={() => printDocument(viewMode)} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90">

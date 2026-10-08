@@ -15,7 +15,7 @@ import {
   Settings,
 } from 'lucide-react';
 import AISettingsModal from '@/components/AISettingsModal';
-import { supabase, type Medicine } from '@/lib/supabase';
+import { supabase, type Medicine, medicinesAll } from '@/lib/supabase';
 import {
   analyzeFinancialsWithAI,
   localFallbackFinancialAnalysis,
@@ -74,7 +74,7 @@ export default function FinancialCfoDashboard() {
       supabase.from('sales').select('id, subtotal, tax, discount, total, created_at'),
       supabase.from('sale_items').select('sale_id, medicine_id, medicine_name, quantity, price, subtotal'),
       supabase.from('expenses').select('id, category, description, amount, created_at'),
-      supabase.from('medicines').select('*'),
+      medicinesAll(),
     ]);
 
     const sales = (salesRes.data as SaleRow[]) ?? [];

@@ -7,3 +7,9 @@ Do not write code that will trigger this error: "Warning: Extra attributes from 
 By default, this template supports JSX syntax with Tailwind CSS classes, the shadcn/ui library, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
 
 Use icons from lucide-react for logos.
+
+KEAMANAN (WAJIB, baca SECURITY.md): Jangan membuat/mengubah RLS policy menjadi terbuka untuk `anon` atau `USING (true)`.
+Jangan menyimpan API key/secret di kode, localStorage, atau variabel NEXT_PUBLIC_*. Penjualan, pembatalan, retur, terima PO,
+dan opname HARUS lewat fungsi database (supabase.rpc) yang sudah ada, jangan update stok langsung dari browser.
+Teks dari database yang disisipkan ke HTML mentah wajib di-escape dengan esc() dari lib/format.ts.
+Login memakai Supabase Auth (lib/auth-context.tsx); jangan kembalikan login berbasis localStorage atau password default.

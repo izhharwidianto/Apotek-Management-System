@@ -21,7 +21,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { supabase, type Medicine, type Sale, type SaleItem, type Expense } from '@/lib/supabase';
+import { supabase, type Medicine, type Sale, type SaleItem, type Expense, medicinesAll } from '@/lib/supabase';
 import { formatIDR, formatIDRPlain, formatDate, daysUntil } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,7 @@ export default function DashboardView() {
       supabase.from('sales').select('*').order('created_at', { ascending: false }),
       supabase.from('sale_items').select('*'),
       supabase.from('expenses').select('*').order('created_at', { ascending: false }),
-      supabase.from('medicines').select('*').order('name', { ascending: true }),
+      medicinesAll(),
     ]);
     setSales((s.data as Sale[]) ?? []);
     setSaleItems((si.data as SaleItem[]) ?? []);
@@ -209,7 +209,7 @@ export default function DashboardView() {
             items={lowStock.map((m) => ({
               id: m.id,
               primary: m.name,
-              secondary: `Sisa ${m.stock} ${m.unit} &middot; reorder ${m.reorder_point}`,
+              secondary: `Sisa ${m.stock} ${m.unit} \u00b7 reorder ${m.reorder_point}`,
               badge: m.stock === 0 ? 'Habis' : `${m.stock}`,
             }))}
             emptyText="Semua stok aman."
@@ -300,7 +300,7 @@ function NotificationPanel({
             <div key={it.id} className="flex items-center justify-between rounded-lg border border-border/60 bg-background/50 px-3 py-2">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{it.primary}</p>
-                <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: it.secondary }} />
+                <p className="text-xs text-muted-foreground">{it.secondary}</p>
               </div>
               <span className={cn('ml-2 shrink-0 rounded-md px-2 py-0.5 text-xs font-bold', toneCls)}>{it.badge}</span>
             </div>
